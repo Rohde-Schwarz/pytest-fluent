@@ -1,4 +1,4 @@
-# pytest-fluent
+# pytest-fluent test
 
 A Python package in order to extend pytest by fluentd logging
 
@@ -10,7 +10,7 @@ pytest-fluent enables you to forward your test data immediately to your prefered
 
 Each pytest session gets an unique identifier (UID) assigned as well as each executed test case. With these UIDs, you can filter easily for sessions and testcase data entries, for instance in your favorite database.
 
-## Installation
+## Installation test
 
 The package is available at pypi.rsint.net and can be installed by typing
 
