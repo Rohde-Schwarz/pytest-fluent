@@ -12,7 +12,7 @@ Each pytest session gets an unique identifier (UID) assigned as well as each exe
 
 ## Installation
 
-The package is available at pypi.rsint.net and can be installed by typing
+The package is available at pypi.org and can be installed by typing
 
 ```shell
 pip install pytest-fluent
