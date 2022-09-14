@@ -33,10 +33,17 @@ jobs:
         continue-on-error: true
         run: |
           tox -e errors
-      - name: Run pytests with coverage
+      - name: Run pytest with coverage
         continue-on-error: true
         run: |
           tox -e test -- --junitxml=results.xml tests/
+      - name: Test report
+        uses: mikepenz/action-junit-report@v3
+        if: always()
+        with:
+          check_name: Test Report (${{ matrix.os }}, ${{ matrix.python }})
+          report_paths: '**/results.xml'
+          detailed_summary: true
       - name: Convert coverage
         run: |
           tox -e coverage
