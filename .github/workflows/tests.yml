@@ -42,13 +42,14 @@ jobs:
         if: always()
         with:
           check_name: Test Report (${{ matrix.os }}, ${{ matrix.python }})
-          report_paths: '**/results.xml'
+          report_paths: "**/results.xml"
           detailed_summary: true
       - name: Convert coverage
         run: |
           tox -e coverage
-      - uses: codecov/codecov-action@v2
-        with:
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: true
+      # Currently no official account for organization
+      # - uses: codecov/codecov-action@v2
+      #   with:
+      #     flags: unittests
+      #     name: codecov-umbrella
+      #     fail_ci_if_error: true
