@@ -1,86 +1,90 @@
 import socket
+import pytest
 
 TAG = "unittest"
 LABEL = "pytest"
 PORT = 12345
+HOSTNAME = socket.gethostname()
 
+@pytest.fixture
+def tox_ini(pytester, session_uuid):
+    return pytester.makeini(
+        f"[pytest]\naddopts = --session-uuid='{session_uuid}' --fluentd-port={PORT} --fluentd-host='{HOSTNAME}' --fluentd-tag='{TAG}' --fluentd-label='{LABEL}' --extend-logging"
+    )
 
-def test_commandline_args(pytester, session_uuid):
+@pytest.fixture
+def pyprojtoml_ini(pytester, session_uuid):
+    return pytester.makepyprojecttoml(
+        f"[tool.pytest.ini_options]\naddopts = \"--session-uuid='{session_uuid}' --fluentd-port={PORT} --fluentd-host='{HOSTNAME}' --fluentd-tag='{TAG}' --extend-logging\""
+    )
+
+@pytest.fixture
+def pytest_ini(pytester, session_uuid):
+    return pytester.makefile(
+        ".ini",
+        pytest=f"[pytest]\naddopts = --session-uuid='{session_uuid}' --fluentd-port={PORT} --fluentd-host='{HOSTNAME}' --fluentd-tag='{TAG}' --fluentd-label='{LABEL}' --extend-logging",
+    )
+
+@pytest.mark.parametrize("ini_path",["tox_ini", "pyprojtoml_ini", "pytest_ini"])
+def test_ini_setting(pytester, session_uuid, ini_path, request):
+
+    ini_file = request.getfixturevalue(ini_path)
+    print("Generated ini file:", ini_file)
+
+    filename = make_py_file(pytester, session_uuid, TAG, LABEL, PORT, HOSTNAME, True)
+    print("Generated python module:", filename)
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(
+        [
+            "*passed*",
+        ]
+    )
+    assert result.ret == 0
+@pytest.mark.parametrize("ini_path",["tox_ini", "pyprojtoml_ini", "pytest_ini"])
+def test_cli_args_precedence(pytester, ini_path, request):
+    fluent_tag = 'dummytest'
+    fluent_label = 'pytester'
+    fluent_port = 65535
+
+    ini_file = request.getfixturevalue(ini_path)
+    print("Generated ini file:", ini_file)
+
+    filename = make_py_file(pytester, tag=fluent_tag, label=fluent_label, port=fluent_port, logging=True)
+    print("Generated python module:", filename)
+    result = pytester.runpytest(f"--fluentd-tag={fluent_tag}", f"--fluentd-label={fluent_label}", f"--fluentd-port={fluent_port}")
+    result.stdout.fnmatch_lines(
+        [
+            "*passed*",
+        ]
+    )
+    assert result.ret == 0
+
+def test_commandline_args(pytester):
 
     filename = make_py_file(pytester, tag=TAG, logging=True)
     print(filename)
     result = pytester.runpytest("--extend-logging", f"--fluentd-tag={TAG}")
-    """result.stdout.fnmatch_lines(
-        [
-            "*::test_fluentd_config PASSED*",
-        ]
-    )"""
-    assert result.ret == 0
-
-
-def test_tox_ini_setting(pytester, session_uuid):
-
-    pytester.makeini(
-        f"[pytest]\naddopts = --session-uuid='{session_uuid}' --fluentd-port={PORT} --fluentd-host=localhost --fluentd-tag='{TAG}' --fluentd-label='{LABEL}' --extend-logging"
-    )
-
-    make_py_file(pytester, session_uuid, TAG, LABEL, PORT, "localhost", True)
-
-    result = pytester.runpytest("-v")
     result.stdout.fnmatch_lines(
         [
-            "*::test_fluentd_config PASSED*",
+            "*passed*",
         ]
     )
     assert result.ret == 0
 
-
-def test_pyprojtoml_ini_setting(pytester, session_uuid):
-
-    pytester.makepyprojecttoml(
-        f"[tool.pytest.ini_options]\naddopts = \"--session-uuid='{session_uuid}' --fluentd-port={PORT} --fluentd-host=localhost --fluentd-tag='{TAG}' --extend-logging\""
-    )
-
-    make_py_file(pytester, session_uuid, TAG, LABEL, PORT, "localhost", True)
-
-    result = pytester.runpytest("-v")
-    result.stdout.fnmatch_lines(
-        [
-            "*::test_fluentd_config PASSED*",
-        ]
-    )
-    assert result.ret == 0
-
-
-def test_pytest_ini_setting(pytester, session_uuid):
-    pytester.makefile(
-        ".ini",
-        pytest=f"[pytest]\naddopts = --session-uuid='{session_uuid}' --fluentd-port={PORT} --fluentd-host=localhost --fluentd-tag='{TAG}' --fluentd-label='{LABEL}' --extend-logging",
-    )
-
-    make_py_file(pytester, session_uuid, TAG, LABEL, PORT, "localhost", True)
-
-    result = pytester.runpytest("-v")
-    result.stdout.fnmatch_lines(
-        [
-            "*::test_fluentd_config PASSED*",
-        ]
-    )
-    assert result.ret == 0
 
 
 def make_py_file(
     pytester,
-    session_uuid="",
+    session_id="",
     tag="test",
     label="pytest",
     port=24224,
-    host=socket.gethostname(),
+    host="",
     logging=False,
 ):
 
-    session_uuid_str = (
-        f'assert pytest_config.getoption("--session-uuid") == "{session_uuid}"'
+    session_id_str = (
+        f'assert pytest_config.getoption("--session-uuid") == "{session_id}"'
     )
 
     tag_str = f'assert pytest_config.getoption("--fluentd-tag") == "{tag}"'
@@ -106,8 +110,8 @@ def make_py_file(
                 return request.config
 
             def test_fluentd_config(pytest_config):
-                {session_uuid_str if session_uuid else session_uuid}
-                {host_str}
+                {session_id_str if session_id else session_id}
+                {host_str if host else host}
                 {port_str}
                 {tag_str}
                 {label_str}
