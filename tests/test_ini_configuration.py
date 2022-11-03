@@ -1,5 +1,9 @@
 import socket
+import logging
 import pytest
+
+# set log_level="DEBUG" and log_cli = true in pyproject.toml configuration when debug info is needed
+logger = logging.getLogger('debug-log')
 
 TAG = "unittest"
 LABEL = "pytest"
@@ -29,10 +33,10 @@ def pytest_ini(pytester, session_uuid):
 def test_ini_setting(pytester, session_uuid, ini_path, request):
 
     ini_file = request.getfixturevalue(ini_path)
-    print("Generated ini file:", ini_file)
+    logger.debug("Generated ini file: %s", ini_file)
 
     filename = make_py_file(pytester, session_uuid, TAG, LABEL, PORT, HOSTNAME, True)
-    print("Generated python module:", filename)
+    logger.debug("Generated python module: %s", filename)
     result = pytester.runpytest("-v")
     result.stdout.fnmatch_lines(
         [
@@ -47,10 +51,10 @@ def test_cli_args_precedence(pytester, ini_path, request):
     fluent_port = 65535
 
     ini_file = request.getfixturevalue(ini_path)
-    print("Generated ini file:", ini_file)
+    logger.debug("Generated ini file: %s", ini_file)
 
     filename = make_py_file(pytester, tag=fluent_tag, label=fluent_label, port=fluent_port, logging=True)
-    print("Generated python module:", filename)
+    logger.debug("Generated python module: %s", filename)
     result = pytester.runpytest(f"--fluentd-tag={fluent_tag}", f"--fluentd-label={fluent_label}", f"--fluentd-port={fluent_port}")
     result.stdout.fnmatch_lines(
         [
@@ -62,7 +66,7 @@ def test_cli_args_precedence(pytester, ini_path, request):
 def test_commandline_args(pytester):
 
     filename = make_py_file(pytester, tag=TAG, logging=True)
-    print(filename)
+    logger.debug("Generated python module: %s", filename)
     result = pytester.runpytest("--extend-logging", f"--fluentd-tag={TAG}")
     result.stdout.fnmatch_lines(
         [
@@ -70,8 +74,6 @@ def test_commandline_args(pytester):
         ]
     )
     assert result.ret == 0
-
-
 
 def make_py_file(
     pytester,
