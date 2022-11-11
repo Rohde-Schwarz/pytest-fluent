@@ -1,3 +1,5 @@
+from .mock_args_workaround import get_call_arg_data
+
 def test_get_logger(run_mocked_pytest, session_uuid, logging_content):
     runpytest, sender = run_mocked_pytest
     result = runpytest(
@@ -15,7 +17,7 @@ def test_get_logger(run_mocked_pytest, session_uuid, logging_content):
     result.assert_outcomes(passed=1)
     assert len(call_args) > 0
     for idx, call_arg in enumerate(call_args):
-        data = call_arg.args[2]
+        data = get_call_arg_data(call_arg)
         if idx in [2, 3]:
             assert data.get("type") == "logging"
             assert "host" in data

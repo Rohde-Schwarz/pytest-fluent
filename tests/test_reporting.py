@@ -1,3 +1,6 @@
+from .mock_args_workaround import get_call_arg_data
+
+
 def test_data_reporter_base_with_passed(run_mocked_pytest, session_uuid):
     runpytest, sender = run_mocked_pytest
     result = runpytest(
@@ -11,7 +14,7 @@ def test_data_reporter_base_with_passed(run_mocked_pytest, session_uuid):
     call_args = fluent_sender.emit_with_time.call_args_list
     result.assert_outcomes(passed=1)
     assert len(call_args) > 0
-    report = call_args[2].args[2]
+    report = get_call_arg_data(call_args[2])
     assert (
         report.get("name")
         == "test_data_reporter_base_with_passed.py::test_base"
@@ -93,7 +96,7 @@ def test_data_reporter_base_with_xfail(run_mocked_pytest, session_uuid):
     fluent_sender = sender.return_value
     call_args = fluent_sender.emit_with_time.call_args_list
     assert len(call_args) > 0
-    args = call_args[2].args[2]
+    args = get_call_arg_data(call_args[2])
     assert args.get("outcome") == "xfailed"
     assert "failure_message" in args
     assert args.get("markers", {}).get("xfail") == 1
@@ -112,7 +115,7 @@ def test_data_reporter_base_with_exception(run_mocked_pytest, session_uuid):
     fluent_sender = sender.return_value
     call_args = fluent_sender.emit_with_time.call_args_list
     assert len(call_args) > 0
-    args = call_args[2].args[2]
+    args = get_call_arg_data(call_args[2])
     assert args.get("when") == "call"
     assert args.get("outcome") == "error"
     assert "failure_message" in args
@@ -141,7 +144,7 @@ def test_data_reporter_base_with_setup_exception(
     fluent_sender = sender.return_value
     call_args = fluent_sender.emit_with_time.call_args_list
     assert len(call_args) > 0
-    args = call_args[2].args[2]
+    args = get_call_arg_data(call_args[2])
     assert args.get("when") == "setup"
     assert args.get("outcome") == "error"
     assert "failure_message" in args
