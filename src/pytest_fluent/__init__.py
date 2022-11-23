@@ -1,11 +1,6 @@
 """pytest-fluent-logging."""
-import sys
 
-if sys.version_info >= (3, 8):
-    from importlib.metadata import PackageNotFoundError, version
-else:
-    from importlib_metadata import PackageNotFoundError  # type: ignore
-    from importlib_metadata import version  # type: ignore
+from importlib.metadata import PackageNotFoundError, version
 
 __version__ = "unknown"
 try:
