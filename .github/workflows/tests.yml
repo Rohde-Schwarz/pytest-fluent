@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python: ["3.6", "3.7", "3.8", "3.9", "3.10"]
+        python: ["3.8", "3.9", "3.10", "3.11"]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -33,15 +33,23 @@ jobs:
         continue-on-error: true
         run: |
           tox -e errors
-      - name: Run pytests with coverage
+      - name: Run pytest with coverage
         continue-on-error: true
         run: |
           tox -e test -- --junitxml=results.xml tests/
+      - name: Test report
+        uses: mikepenz/action-junit-report@v3
+        if: always()
+        with:
+          check_name: Test Report (${{ matrix.os }}, ${{ matrix.python }})
+          report_paths: "**/results.xml"
+          detailed_summary: true
       - name: Convert coverage
         run: |
           tox -e coverage
-      - uses: codecov/codecov-action@v2
-        with:
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: true
+      # Currently no official account for organization
+      # - uses: codecov/codecov-action@v2
+      #   with:
+      #     flags: unittests
+      #     name: codecov-umbrella
+      #     fail_ci_if_error: true
