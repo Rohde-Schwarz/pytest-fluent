@@ -111,6 +111,34 @@ The pytest CLI can be called with the following arguments in order to configure 
 | --fluentd-label  | Set a custom Fluentd label                                                        | 'pytest' |
 | --extend-logging | Extend the Python logging with a Fluent handler                                   | False    |
 
+### Ini Configuration Support 
+
+Default values of the CLI arguments for a project could also be defined in one of the following ini configuration files:
+
+1. pytest.ini: Arguments are defined under pytest section in the file. This file takes precedence over all other configuration files even if empty. 
+
+```python
+[pytest]
+addopts= --session-uuid="ac2f7600-a079-46cf-a7e0-6408b166364c" --fluentd-port=24224  --fluentd-host=localhost --fluentd-tag='dummytest' --fluentd-label='pytest' --extend-logging
+```
+
+2. pyproject.toml: are considered for configuration when they contain a tool.pytest.ini_options section is available
+
+```python
+[tool.pytest.ini_options]
+addopts="--fluentd-port=24224 --fluentd-host=localhost --fluentd-tag='test' --fluentd-label='pytest' --extend-logging"
+```
+
+3. tox.ini: can also be used to hold pytest configuration if they have a [pytest] section.
+
+```python
+[pytest]
+addopts= --fluentd-port=24224 --fluentd-host=localhost --fluentd-tag='test' --fluentd-label='pytest'
+```
+
+If the same option is specified in both CLI and ini file, then CLI option would have higher priority and override the ini file values.
+
+
 ### What data are sent?
 
 pytest-fluent sends any information, e.g. stage information or logging from a test case, as a single chunk. For instance, the data collection from `test_addoptions.py` test looks as following
