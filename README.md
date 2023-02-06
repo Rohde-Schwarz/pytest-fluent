@@ -1,5 +1,7 @@
 # pytest-fluent
 
+[![Documentation](https://readthedocs.org/projects/pytest-fluent/badge/?version=latest)](https://pytest-fluent.readthedocs.io/) [![Build Status](https://github.com/Rohde-Schwarz/pytest-fluent/actions/workflows/tests.yml/badge.svg)](https://github.com/Rohde-Schwarz/pytest-fluent/actions/) [![PyPI Versions](https://img.shields.io/pypi/pyversions/pytest-fluent.svg)](https://pypi.python.org/pypi/pytest-fluent) ![PyPI - Downloads](https://img.shields.io/pypi/dm/pytest-fluent)  [![PyPI Status](https://img.shields.io/pypi/status/pytest-fluent.svg)](https://pypi.python.org/pypi/pytest-fluent) [![PyPI License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+
 A Python package in order to extend pytest by fluentd logging
 
 ## Description
