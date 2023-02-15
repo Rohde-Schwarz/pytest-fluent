@@ -6,6 +6,7 @@ from io import BytesIO
 
 import msgpack
 import pytest
+import time
 from fluent import event, sender
 from fluent.handler import FluentHandler, FluentRecordFormatter
 
@@ -23,6 +24,7 @@ from .test_report import LogReport
 class FluentLoggerRuntime(object):
     def __init__(self, config):
         self._session_uuid = None
+        self._session_start_time = None
         self._test_uuid = None
         self.config = config
         self._set_session_uid(self.config.getoption("--session-uuid"))
@@ -82,6 +84,7 @@ class FluentLoggerRuntime(object):
     def pytest_sessionstart(self):
         """Custom hook for session start."""
         set_stage("session")
+        self._session_start_time = time.time()
         if not self.config.getoption("collectonly"):
             data = {
                 "status": "start",
@@ -168,6 +171,7 @@ class FluentLoggerRuntime(object):
                 self._label,
                 {
                     "status": "finish",
+                    "duration": time.time() - self._session_start_time,
                     "stage": "session",
                     "sessionId": self.session_uid,
                 },

@@ -204,6 +204,7 @@ pytest-fluent sends any information, e.g. stage information or logging from a te
     },
     {
         "status": "finish",
+        "duration": 0.00297708511352539,
         "stage": "session",
         "sessionId": "d8f01de3-8416-4801-9406-0ea3d5cfe3c0"
     }
