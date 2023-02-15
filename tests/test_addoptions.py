@@ -44,6 +44,8 @@ def test_fluentd_logged_parameters(
             assert data.get("message") == logging_content
         if idx in [0, 6]:
             assert data.get("stage") == "session"
+        if idx == 6:
+            assert data.get("duration") > 0
         if idx in [1, 2, 3, 4, 5]:
             assert data.get("stage") == "testcase"
             assert "testId" in data
