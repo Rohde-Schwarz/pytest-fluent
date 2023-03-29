@@ -1,5 +1,6 @@
 """pytest-fluent-logging plugin definition."""
 import logging
+import textwrap
 import time
 import typing
 import uuid
@@ -20,6 +21,9 @@ from .test_report import LogReport
 # Plugin runtime
 #####################################################
 
+DOCSTRING_KEY = "docstring"
+DOCSTRING_STASHKEY = pytest.StashKey[str]()
+
 
 class FluentLoggerRuntime(object):
     def __init__(self, config):
@@ -33,6 +37,7 @@ class FluentLoggerRuntime(object):
         self._tag = config.getoption("--fluentd-tag")
         self._label = config.getoption("--fluentd-label")
         self._extend_logging = config.getoption("--extend-logging")
+        self._add_docstrings = config.getoption("--add-docstrings")
         self._log_reporter = LogReport(self.config)
         self._setup_fluent_sender()
         self._patch_logging()
@@ -112,6 +117,8 @@ class FluentLoggerRuntime(object):
     def pytest_runtest_setup(self, item: pytest.Item):
         """Custom hook for test setup."""
         set_stage("testcase")
+        docstring = get_test_docstring(item)
+        item.stash[DOCSTRING_STASHKEY] = docstring
         if not self.config.getoption("collectonly"):
             pass
 
@@ -120,6 +127,13 @@ class FluentLoggerRuntime(object):
         set_stage("testcase")
         if not self.config.getoption("collectonly"):
             pass
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtest_makereport(self, item: pytest.Item, call):
+        report = (yield).get_result()
+        docstring = item.stash.get(DOCSTRING_STASHKEY, None)
+        report.stash = {}
+        report.stash[DOCSTRING_KEY] = docstring
 
     def pytest_runtest_logreport(self, report: pytest.TestReport):
         """Custom hook for logging results."""
@@ -136,6 +150,10 @@ class FluentLoggerRuntime(object):
                     "testId": self.test_uid,
                 }
             )
+            if self._add_docstrings:
+                docstring = report.stash.get(DOCSTRING_KEY, None)
+                if docstring:
+                    result_data.update({"docstring": docstring})
             event.Event(self._label, result_data)
 
     def pytest_runtest_logfinish(
@@ -217,6 +235,11 @@ def pytest_addoption(parser):
         "--extend-logging",
         action="store_true",
         help="Extend the Python logging with a Fluent handler",
+    )
+    group.addoption(
+        "--add-docstrings",
+        action="store_true",
+        help="Add test docstrings to the testcase call messages.",
     )
 
 
@@ -367,3 +390,16 @@ def get_test_uid() -> typing.Optional[str]:
     if fluent_runtime is None:
         return None
     return typing.cast(FluentLoggerRuntime, fluent_runtime).test_uid
+
+
+# Docstrings
+
+
+def get_test_docstring(item: pytest.Item) -> typing.Optional[str]:
+    """Extract the docstring from a pytest test item."""
+    if hasattr(item, "obj") and item.obj.__doc__ is not None:
+        doc = textwrap.dedent(item.obj.__doc__)
+        # Remove heading and trailing newlines
+        doc = doc.lstrip("\n").rstrip("\n")
+        return doc
+    return None

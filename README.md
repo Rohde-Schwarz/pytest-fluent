@@ -112,6 +112,7 @@ The pytest CLI can be called with the following arguments in order to configure 
 | --fluentd-tag    | Set a custom Fluentd tag                                                          | 'test'   |
 | --fluentd-label  | Set a custom Fluentd label                                                        | 'pytest' |
 | --extend-logging | Extend the Python logging with a Fluent handler                                   | False    |
+| --add-docstrings | Add test docstrings to testcase call messages                                     |          |
 
 ### Ini Configuration Support 
 
