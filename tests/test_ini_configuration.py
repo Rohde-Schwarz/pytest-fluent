@@ -1,14 +1,16 @@
-import socket
 import logging
+import socket
+
 import pytest
 
 # set log_level="DEBUG" and log_cli = true in pyproject.toml configuration when debug info is needed
-logger = logging.getLogger('debug-log')
+logger = logging.getLogger("debug-log")
 
 TAG = "unittest"
 LABEL = "pytest"
 PORT = 12345
 HOSTNAME = socket.gethostname()
+
 
 @pytest.fixture
 def tox_ini(pytester, session_uuid):
@@ -16,11 +18,13 @@ def tox_ini(pytester, session_uuid):
         f"[pytest]\naddopts = --session-uuid='{session_uuid}' --fluentd-port={PORT} --fluentd-host='{HOSTNAME}' --fluentd-tag='{TAG}' --fluentd-label='{LABEL}' --extend-logging"
     )
 
+
 @pytest.fixture
 def pyprojtoml_ini(pytester, session_uuid):
     return pytester.makepyprojecttoml(
         f"[tool.pytest.ini_options]\naddopts = \"--session-uuid='{session_uuid}' --fluentd-port={PORT} --fluentd-host='{HOSTNAME}' --fluentd-tag='{TAG}' --extend-logging\""
     )
+
 
 @pytest.fixture
 def pytest_ini(pytester, session_uuid):
@@ -29,9 +33,9 @@ def pytest_ini(pytester, session_uuid):
         pytest=f"[pytest]\naddopts = --session-uuid='{session_uuid}' --fluentd-port={PORT} --fluentd-host='{HOSTNAME}' --fluentd-tag='{TAG}' --fluentd-label='{LABEL}' --extend-logging",
     )
 
-@pytest.mark.parametrize("ini_path",["tox_ini", "pyprojtoml_ini", "pytest_ini"])
-def test_ini_setting(pytester, session_uuid, ini_path, request):
 
+@pytest.mark.parametrize("ini_path", ["tox_ini", "pyprojtoml_ini", "pytest_ini"])
+def test_ini_setting(pytester, session_uuid, ini_path, request):
     ini_file = request.getfixturevalue(ini_path)
     logger.debug("Generated ini file: %s", ini_file)
 
@@ -44,18 +48,26 @@ def test_ini_setting(pytester, session_uuid, ini_path, request):
         ]
     )
     assert result.ret == 0
-@pytest.mark.parametrize("ini_path",["tox_ini", "pyprojtoml_ini", "pytest_ini"])
+
+
+@pytest.mark.parametrize("ini_path", ["tox_ini", "pyprojtoml_ini", "pytest_ini"])
 def test_cli_args_precedence(pytester, ini_path, request):
-    fluent_tag = 'dummytest'
-    fluent_label = 'pytester'
+    fluent_tag = "dummytest"
+    fluent_label = "pytester"
     fluent_port = 65535
 
     ini_file = request.getfixturevalue(ini_path)
     logger.debug("Generated ini file: %s", ini_file)
 
-    filename = make_py_file(pytester, tag=fluent_tag, label=fluent_label, port=fluent_port, logging=True)
+    filename = make_py_file(
+        pytester, tag=fluent_tag, label=fluent_label, port=fluent_port, logging=True
+    )
     logger.debug("Generated python module: %s", filename)
-    result = pytester.runpytest(f"--fluentd-tag={fluent_tag}", f"--fluentd-label={fluent_label}", f"--fluentd-port={fluent_port}")
+    result = pytester.runpytest(
+        f"--fluentd-tag={fluent_tag}",
+        f"--fluentd-label={fluent_label}",
+        f"--fluentd-port={fluent_port}",
+    )
     result.stdout.fnmatch_lines(
         [
             "*passed*",
@@ -63,8 +75,8 @@ def test_cli_args_precedence(pytester, ini_path, request):
     )
     assert result.ret == 0
 
-def test_commandline_args(pytester):
 
+def test_commandline_args(pytester):
     filename = make_py_file(pytester, tag=TAG, logging=True)
     logger.debug("Generated python module: %s", filename)
     result = pytester.runpytest("--extend-logging", f"--fluentd-tag={TAG}")
@@ -75,6 +87,7 @@ def test_commandline_args(pytester):
     )
     assert result.ret == 0
 
+
 def make_py_file(
     pytester,
     session_id="",
@@ -84,24 +97,19 @@ def make_py_file(
     host="",
     logging=False,
 ):
-
     session_id_str = (
         f'assert pytest_config.getoption("--session-uuid") == "{session_id}"'
     )
 
     tag_str = f'assert pytest_config.getoption("--fluentd-tag") == "{tag}"'
 
-    label_str = (
-        f'assert pytest_config.getoption("--fluentd-label") == "{label}"'
-    )
+    label_str = f'assert pytest_config.getoption("--fluentd-label") == "{label}"'
 
     port_str = f'assert pytest_config.getoption("--fluentd-port") == {port}'
 
     host_str = f'assert pytest_config.getoption("--fluentd-host") == "{host}"'
 
-    log_str = (
-        f'assert pytest_config.getoption("--extend-logging") == {logging}'
-    )
+    log_str = f'assert pytest_config.getoption("--extend-logging") == {logging}'
 
     return pytester.makepyfile(
         f"""

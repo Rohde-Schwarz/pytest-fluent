@@ -12,10 +12,7 @@ def test_data_reporter_base_with_passed(run_mocked_pytest, session_uuid):
     result.assert_outcomes(passed=1)
     assert len(call_args) > 0
     report = call_args[2].args[2]
-    assert (
-        report.get("name")
-        == "test_data_reporter_base_with_passed.py::test_base"
-    )
+    assert report.get("name") == "test_data_reporter_base_with_passed.py::test_base"
     assert report.get("outcome") == "passed"
     assert "duration" in report
     markers = report.get("markers")
@@ -118,9 +115,7 @@ def test_data_reporter_base_with_exception(run_mocked_pytest, session_uuid):
     assert "failure_message" in args
 
 
-def test_data_reporter_base_with_setup_exception(
-    run_mocked_pytest, session_uuid
-):
+def test_data_reporter_base_with_setup_exception(run_mocked_pytest, session_uuid):
     runpytest, sender = run_mocked_pytest
     _ = runpytest(
         f"--session-uuid={session_uuid}",
