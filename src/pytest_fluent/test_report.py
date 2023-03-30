@@ -56,7 +56,6 @@ class LogReport(object):
                 )
         elif report.failed:
             if report.when == "call":
-
                 verdict = "failed"
                 if hasattr(report, "longrepr"):
                     import _pytest

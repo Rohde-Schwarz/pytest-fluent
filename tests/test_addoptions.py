@@ -6,9 +6,7 @@ tag = "unittest"
 label = "pytest"
 
 
-def test_fluentd_logged_parameters(
-    run_mocked_pytest, session_uuid, logging_content
-):
+def test_fluentd_logged_parameters(run_mocked_pytest, session_uuid, logging_content):
     runpytest, sender = run_mocked_pytest
     result = runpytest(
         f"--session-uuid={session_uuid}",

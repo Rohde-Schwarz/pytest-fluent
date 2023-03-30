@@ -1,12 +1,12 @@
 """pytest-fluent-logging plugin definition."""
 import logging
+import time
 import typing
 import uuid
 from io import BytesIO
 
 import msgpack
 import pytest
-import time
 from fluent import event, sender
 from fluent.handler import FluentHandler, FluentRecordFormatter
 
@@ -94,9 +94,7 @@ class FluentLoggerRuntime(object):
             data.update(get_additional_session_information())
             event.Event(self._label, data)
 
-    def pytest_runtest_logstart(
-        self, nodeid: str, location: typing.Tuple[int, str]
-    ):
+    def pytest_runtest_logstart(self, nodeid: str, location: typing.Tuple[int, str]):
         """Custom hook for test start."""
         set_stage("testcase")
         if not self.config.getoption("collectonly"):
