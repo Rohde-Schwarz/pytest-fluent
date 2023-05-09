@@ -36,6 +36,7 @@ class FluentLoggerRuntime(object):
         self._port = config.getoption("--fluentd-port")
         self._tag = config.getoption("--fluentd-tag")
         self._label = config.getoption("--fluentd-label")
+        self._timestamp = config.getoption("--fluentd-timestamp")
         self._extend_logging = config.getoption("--extend-logging")
         self._add_docstrings = config.getoption("--add-docstrings")
         self._log_reporter = LogReport(self.config)
@@ -55,7 +56,7 @@ class FluentLoggerRuntime(object):
 
     def _patch_logging(self):
         if self._extend_logging:
-            extend_loggers(self._host, self._port, self._tag)
+            extend_loggers(self._host, self._port, self._tag, self._timestamp)
 
     def _set_session_uid(
         self, id: typing.Optional[typing.Union[str, uuid.UUID]] = None
@@ -232,6 +233,11 @@ def pytest_addoption(parser):
         help="Custom Fluentd label (default: %(default)s)",
     )
     group.addoption(
+        "--fluentd-timestamp",
+        default=None,
+        help="Custom Fluentd timestamp (default: %(default)s)",
+    )
+    group.addoption(
         "--extend-logging",
         action="store_true",
         help="Extend the Python logging with a Fluent handler",
@@ -273,12 +279,13 @@ def get_logger(request):
     host = config.getoption("--fluentd-host")
     port = config.getoption("--fluentd-port")
     tag = config.getoption("--fluentd-tag")
+    timestamp = config.getoption("--fluentd-timestamp")
 
     def get_logger(name=None):
         logger = logging.getLogger(name)
         if name is None:
             return logger
-        add_handler(host, port, tag, logger)
+        add_handler(host, port, tag, timestamp, logger)
         return logger
 
     return get_logger
@@ -322,20 +329,21 @@ class RecordFormatter(FluentRecordFormatter):
         return data
 
 
-def extend_loggers(host, port, tag) -> None:
+def extend_loggers(host, port, tag, timestamp) -> None:
     """Extend Python logging with a Fluentd handler."""
-    modify_logger(host, port, tag, None)
-    modify_logger(host, port, tag, "fluent")
+    modify_logger(host, port, tag, timestamp, None)
+    modify_logger(host, port, tag, timestamp, "fluent")
 
 
-def modify_logger(host, port, tag, name=None) -> None:
+def modify_logger(host, port, tag, timestamp, name=None) -> None:
     """Extend Python logging with a Fluentd handler."""
     logger = logging.getLogger(name)
-    add_handler(host, port, tag, logger)
+    add_handler(host, port, tag, timestamp, logger)
 
 
-def add_handler(host, port, tag, logger):
+def add_handler(host, port, tag, timestamp, logger):
     """Add handler to a specific logger."""
+    # TODO: handle timestamp here
     handler = FluentHandler(
         tag, host=host, port=port, buffer_overflow_handler=overflow_handler
     )

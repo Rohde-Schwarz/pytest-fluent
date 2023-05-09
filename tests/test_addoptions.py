@@ -51,3 +51,14 @@ def test_fluentd_logged_parameters(run_mocked_pytest, session_uuid, logging_cont
                 uuid.UUID(data["testId"])
             except ValueError:
                 assert False, "Not a UUID string"
+
+
+def test_fluentd_with_timestamp_enabled(run_mocked_pytest, session_uuid, logging_content):
+    runpytest, sender = run_mocked_pytest
+    result = runpytest(
+        f"--session-uuid={session_uuid}",
+        f"--fluentd-timestamp='@timestamp'",
+    )
+    fluent_sender = sender.return_value
+    call_args = fluent_sender.emit_with_time.call_args_list
+    result.assert_outcomes(passed=1)
