@@ -1,0 +1,6 @@
+{
+    "all": {
+        "tag": "<args.tag>",
+        "label": "<args.label>"
+    }
+}

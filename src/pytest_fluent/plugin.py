@@ -4,12 +4,15 @@ import textwrap
 import time
 import typing
 import uuid
+import os
 from io import BytesIO
 
 import msgpack
 import pytest
 from fluent import event, sender
 from fluent.handler import FluentHandler, FluentRecordFormatter
+
+from .SettingFileLoaderAction import SettingFileLoaderAction
 
 from .additional_information import (
     get_additional_session_information,
@@ -116,6 +119,14 @@ class FluentLoggerRuntime(object):
 
     def pytest_runtest_setup(self, item: pytest.Item):
         """Custom hook for test setup."""
+        set_stage("testcase")
+        docstring = get_test_docstring(item)
+        item.stash[DOCSTRING_STASHKEY] = docstring
+        if not self.config.getoption("collectonly"):
+            pass
+
+    def pytest_runtest_teardown(self, item: pytest.Item, nextitem: pytest.Item):
+        """Custom hook for test teardown."""
         set_stage("testcase")
         docstring = get_test_docstring(item)
         item.stash[DOCSTRING_STASHKEY] = docstring
@@ -240,6 +251,13 @@ def pytest_addoption(parser):
         "--add-docstrings",
         action="store_true",
         help="Add test docstrings to the testcase call messages.",
+    )
+    group.addoption(
+        "--stage-settings",
+        type=str,
+        default=os.path.join(os.path.dirname(__file__), "data", "default.stage.json"),
+        action=SettingFileLoaderAction,
+        help="Stage setting description JSON or YAML file path or string object.",
     )
 
 
