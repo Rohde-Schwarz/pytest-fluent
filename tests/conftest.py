@@ -58,3 +58,9 @@ def run_mocked_pytest(runpytest):
 
     with patch("fluent.sender.FluentSender") as sender:
         yield runpytest, sender
+
+
+@pytest.fixture()
+def fluentd_sender():
+    with patch("fluent.sender.FluentSender") as sender:
+        yield sender.return_value
