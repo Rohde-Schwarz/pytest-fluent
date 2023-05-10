@@ -1,0 +1,45 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "patternProperties": {
+        "all|pytest_runtest_logstart|pytest_runtest_logreport|pytest_runtest_logfinish": {
+            "$ref": "#/definitions/AdditionalProperties"
+        }
+    },
+    "additionalProperties": false,
+    "definitions": {
+        "RegexString": {
+            "type": "string",
+            "regex": "(\\$)?([<\\{])?[\\w_.-]+([>\\}])?"
+        },
+        "AdditionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "tag": {
+                    "$ref": "#/definitions/RegexString",
+                    "default": "<args.tag>"
+                },
+                "label": {
+                    "$ref": "#/definitions/RegexString",
+                    "default": "<args.label>"
+                },
+                "replace": {
+                    "type": "object",
+                    "patternProperties": {
+                        "status|stage|sessionId|testId|name|when|duration": {
+                            "$ref": "#/definitions/RegexString"
+                        }
+                    }
+                },
+                "add": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/RegexString"
+                    }
+                }
+            },
+            "required": []
+        }
+    }
+}
