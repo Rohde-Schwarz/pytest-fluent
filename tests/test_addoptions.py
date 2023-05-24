@@ -1,4 +1,4 @@
-import datetime
+import typing
 import uuid
 
 import pytest
@@ -8,10 +8,10 @@ FLUENTD_TAG = "unittest"
 FLUENTD_LABEL = "pytest"
 
 
-FAKE_TEST_UUID = '6d653fee-0c6a-4923-9216-dfc949bd05a0'
+FAKE_TEST_UUID = "6d653fee-0c6a-4923-9216-dfc949bd05a0"
 
 
-def get_data_from_call_args(call_args, fields: list[str]) -> dict:
+def get_data_from_call_args(call_args, fields: typing.List[str]) -> typing.Dict:
     return {field: call_args.args[2].get(field) for field in fields}
 
 
@@ -20,7 +20,7 @@ def monkeypatched_uuid4_fixture(monkeypatch):
     def myuuid4():
         return uuid.UUID(FAKE_TEST_UUID)
 
-    monkeypatch.setattr(uuid, 'uuid4', myuuid4)
+    monkeypatch.setattr(uuid, "uuid4", myuuid4)
 
 
 def test_fluentd_logged_parameters(
@@ -40,13 +40,21 @@ def test_fluentd_logged_parameters(
     assert call_args[0].args[0] == FLUENTD_LABEL
     assert isinstance(call_args[0].args[1], int)
     message_0 = get_data_from_call_args(call_args[0], ["status", "stage", "sessionId"])
-    assert message_0 == {"status": "start", "stage": "session", "sessionId": f"{session_uuid}"}
+    assert message_0 == {
+        "status": "start",
+        "stage": "session",
+        "sessionId": f"{session_uuid}",
+    }
 
     # Message 1
     assert call_args[1].args[0] == FLUENTD_LABEL
     assert isinstance(call_args[1].args[1], int)
     message_1 = get_data_from_call_args(call_args[1], ["status", "stage", "testId"])
-    assert message_1 == {"status": "start", "stage": "testcase", "testId": FAKE_TEST_UUID}
+    assert message_1 == {
+        "status": "start",
+        "stage": "testcase",
+        "testId": FAKE_TEST_UUID,
+    }
 
     # Message 2
     assert call_args[2].args[0] is None
