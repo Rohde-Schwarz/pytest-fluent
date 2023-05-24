@@ -163,6 +163,7 @@ class FluentLoggerRuntime(object):
                 docstring = report.stash.get(DOCSTRING_KEY, None)
                 if docstring:
                     result_data.update({"docstring": docstring})
+            self.set_timestamp_information(event_data=result_data)
             event.Event(self._label, result_data)
 
     def pytest_runtest_logfinish(
@@ -180,6 +181,7 @@ class FluentLoggerRuntime(object):
                 "testId": self.test_uid,
                 "name": nodeid,
             }
+            self.set_timestamp_information(event_data=event_data)
             event.Event(
                 self._label,
                 event_data,
@@ -199,6 +201,7 @@ class FluentLoggerRuntime(object):
                 "stage": "session",
                 "sessionId": self.session_uid,
             }
+            self.set_timestamp_information(event_data=event_data)
             event.Event(
                 self._label,
                 event_data,

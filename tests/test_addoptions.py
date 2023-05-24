@@ -8,9 +8,7 @@ FLUENTD_TAG = "unittest"
 FLUENTD_LABEL = "pytest"
 
 
-FAKE_DATETIME = datetime.datetime(2023, 5, 24, 10, 7, 52, 659601)
-FAKE_DATETIME_ISO = FAKE_DATETIME.isoformat()
-FAKE_UUID = '6d653fee-0c6a-4923-9216-dfc949bd05a0'
+FAKE_TEST_UUID = '6d653fee-0c6a-4923-9216-dfc949bd05a0'
 
 
 def get_data_from_call_args(call_args, fields: list[str]) -> dict:
@@ -20,19 +18,9 @@ def get_data_from_call_args(call_args, fields: list[str]) -> dict:
 @pytest.fixture(name="monkeypatched_uuid4")
 def monkeypatched_uuid4_fixture(monkeypatch):
     def myuuid4():
-        return uuid.UUID(FAKE_UUID)
+        return uuid.UUID(FAKE_TEST_UUID)
 
     monkeypatch.setattr(uuid, 'uuid4', myuuid4)
-
-
-@pytest.fixture(name="monkeypatched_datetime")
-def monkeypatched_datetime_fixture(monkeypatch):
-    class MyDateTime:
-        @classmethod
-        def utcnow(cls):
-            return FAKE_DATETIME
-
-    monkeypatch.setattr(datetime, 'datetime', MyDateTime)
 
 
 def test_fluentd_logged_parameters(
@@ -58,7 +46,7 @@ def test_fluentd_logged_parameters(
     assert call_args[1].args[0] == FLUENTD_LABEL
     assert isinstance(call_args[1].args[1], int)
     message_1 = get_data_from_call_args(call_args[1], ["status", "stage", "testId"])
-    assert message_1 == {"status": "start", "stage": "testcase", "testId": FAKE_UUID}
+    assert message_1 == {"status": "start", "stage": "testcase", "testId": FAKE_TEST_UUID}
 
     # Message 2
     assert call_args[2].args[0] is None
@@ -101,8 +89,12 @@ def test_fluentd_logged_parameters(
     assert call_args[6].args[2].get("duration") > 0
 
 
+def is_pytest_message(args):
+    return args[0] is not None and args[0] == "pytest"
+
+
 def test_fluentd_with_options_and_timestamp_enabled_shows_timestamp_field_in_output(
-    monkeypatched_datetime, runpytest, fluentd_sender, session_uuid
+    runpytest, fluentd_sender, session_uuid
 ):
     result = runpytest(
         f"--session-uuid={session_uuid}",
@@ -115,12 +107,12 @@ def test_fluentd_with_options_and_timestamp_enabled_shows_timestamp_field_in_out
     call_args = fluentd_sender.emit_with_time.call_args_list
     assert len(call_args) == 7
 
-    assert call_args[0].args[2]["@timestamp"] == FAKE_DATETIME_ISO
-    assert call_args[1].args[2]["@timestamp"] == FAKE_DATETIME_ISO
+    for call_arg in filter(is_pytest_message, call_args):
+        assert "@timestamp" in call_arg.args[2]
 
 
 def test_fluentd_with_timestamp_enabled_shows_timestamp_field_in_output(
-    monkeypatched_datetime, runpytest, fluentd_sender, session_uuid
+    runpytest, fluentd_sender, session_uuid
 ):
     result = runpytest(
         f"--session-uuid={session_uuid}",
@@ -130,5 +122,5 @@ def test_fluentd_with_timestamp_enabled_shows_timestamp_field_in_output(
     call_args = fluentd_sender.emit_with_time.call_args_list
     assert len(call_args) == 5
 
-    assert call_args[0].args[2]["@timestamp"] == FAKE_DATETIME_ISO
-    assert call_args[1].args[2]["@timestamp"] == FAKE_DATETIME_ISO
+    for call_arg in filter(is_pytest_message, call_args):
+        assert "@timestamp" in call_arg.args[2]
