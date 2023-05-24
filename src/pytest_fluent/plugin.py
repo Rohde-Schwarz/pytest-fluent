@@ -1,4 +1,5 @@
 """pytest-fluent-logging plugin definition."""
+import datetime
 import logging
 import textwrap
 import time
@@ -56,7 +57,7 @@ class FluentLoggerRuntime(object):
 
     def _patch_logging(self):
         if self._extend_logging:
-            extend_loggers(self._host, self._port, self._tag, self._timestamp)
+            extend_loggers(self._host, self._port, self._tag)
 
     def _set_session_uid(
         self, id: typing.Optional[typing.Union[str, uuid.UUID]] = None
@@ -70,6 +71,12 @@ class FluentLoggerRuntime(object):
             self._session_uuid = id
         else:
             raise ValueError("Unique identifier is not in a valid format.")
+
+    def set_timestamp_information(self, event_data: dict):
+        if self._timestamp is not None:
+            event_data.update(
+                {self._timestamp: f"{datetime.datetime.utcnow().isoformat()}"}
+            )
 
     @property
     def session_uid(
@@ -98,6 +105,7 @@ class FluentLoggerRuntime(object):
                 "sessionId": self.session_uid,
             }
             data.update(get_additional_session_information())
+            self.set_timestamp_information(event_data=data)
             event.Event(self._label, data)
 
     def pytest_runtest_logstart(self, nodeid: str, location: typing.Tuple[int, str]):
@@ -113,6 +121,7 @@ class FluentLoggerRuntime(object):
                 "name": nodeid,
             }
             data.update(get_additional_test_information())
+            self.set_timestamp_information(event_data=data)
             event.Event(self._label, data)
 
     def pytest_runtest_setup(self, item: pytest.Item):
@@ -133,8 +142,7 @@ class FluentLoggerRuntime(object):
     def pytest_runtest_makereport(self, item: pytest.Item, call):
         report = (yield).get_result()
         docstring = item.stash.get(DOCSTRING_STASHKEY, None)
-        report.stash = {}
-        report.stash[DOCSTRING_KEY] = docstring
+        report.stash = {DOCSTRING_KEY: docstring}
 
     def pytest_runtest_logreport(self, report: pytest.TestReport):
         """Custom hook for logging results."""
@@ -165,15 +173,16 @@ class FluentLoggerRuntime(object):
         """Custom hook for test end."""
         set_stage("testcase")
         if not self.config.getoption("collectonly"):
+            event_data = {
+                "status": "finish",
+                "stage": "testcase",
+                "sessionId": self.session_uid,
+                "testId": self.test_uid,
+                "name": nodeid,
+            }
             event.Event(
                 self._label,
-                {
-                    "status": "finish",
-                    "stage": "testcase",
-                    "sessionId": self.session_uid,
-                    "testId": self.test_uid,
-                    "name": nodeid,
-                },
+                event_data,
             )
 
     def pytest_sessionfinish(
@@ -184,14 +193,15 @@ class FluentLoggerRuntime(object):
         """Custom hook for session end."""
         set_stage("session")
         if not self.config.getoption("collectonly"):
+            event_data = {
+                "status": "finish",
+                "duration": time.time() - self._session_start_time,
+                "stage": "session",
+                "sessionId": self.session_uid,
+            }
             event.Event(
                 self._label,
-                {
-                    "status": "finish",
-                    "duration": time.time() - self._session_start_time,
-                    "stage": "session",
-                    "sessionId": self.session_uid,
-                },
+                event_data,
             )
 
 
@@ -279,13 +289,12 @@ def get_logger(request):
     host = config.getoption("--fluentd-host")
     port = config.getoption("--fluentd-port")
     tag = config.getoption("--fluentd-tag")
-    timestamp = config.getoption("--fluentd-timestamp")
 
     def get_logger(name=None):
         logger = logging.getLogger(name)
         if name is None:
             return logger
-        add_handler(host, port, tag, timestamp, logger)
+        add_handler(host, port, tag, logger)
         return logger
 
     return get_logger
@@ -329,21 +338,20 @@ class RecordFormatter(FluentRecordFormatter):
         return data
 
 
-def extend_loggers(host, port, tag, timestamp) -> None:
+def extend_loggers(host, port, tag) -> None:
     """Extend Python logging with a Fluentd handler."""
-    modify_logger(host, port, tag, timestamp, None)
-    modify_logger(host, port, tag, timestamp, "fluent")
+    modify_logger(host, port, tag, None)
+    modify_logger(host, port, tag, "fluent")
 
 
-def modify_logger(host, port, tag, timestamp, name=None) -> None:
+def modify_logger(host, port, tag, name=None) -> None:
     """Extend Python logging with a Fluentd handler."""
     logger = logging.getLogger(name)
-    add_handler(host, port, tag, timestamp, logger)
+    add_handler(host, port, tag, logger)
 
 
-def add_handler(host, port, tag, timestamp, logger):
+def add_handler(host, port, tag, logger):
     """Add handler to a specific logger."""
-    # TODO: handle timestamp here
     handler = FluentHandler(
         tag, host=host, port=port, buffer_overflow_handler=overflow_handler
     )

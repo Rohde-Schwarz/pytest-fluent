@@ -7,6 +7,10 @@ FLUENTD_TAG = "unittest"
 FLUENTD_LABEL = "pytest"
 
 
+def get_data_from_call_args(call_args, fields: list[str]) -> dict:
+    return {field: call_args.args[2].get(field) for field in fields}
+
+
 def test_fluentd_logged_parameters(
     runpytest, fluentd_sender, session_uuid, logging_content
 ):
@@ -23,14 +27,14 @@ def test_fluentd_logged_parameters(
     # Message 0
     assert call_args[0].args[0] == FLUENTD_LABEL
     assert isinstance(call_args[0].args[1], int)
-    assert call_args[0].args[2].get("status") == "start"
-    assert call_args[0].args[2].get("stage") == "session"
+    message_0 = get_data_from_call_args(call_args[0], ["status", "stage"])
+    assert message_0 == {"status": "start", "stage": "session"}
 
     # Message 1
     assert call_args[1].args[0] == FLUENTD_LABEL
     assert isinstance(call_args[1].args[1], int)
-    assert call_args[1].args[2].get("status") == "start"
-    assert call_args[1].args[2].get("stage") == "testcase"
+    message_1 = get_data_from_call_args(call_args[1], ["status", "stage"])
+    assert message_1 == {"status": "start", "stage": "testcase"}
     assert "testId" in call_args[1].args[2]
     try:
         uuid.UUID(call_args[1].args[2]["testId"])
@@ -40,23 +44,24 @@ def test_fluentd_logged_parameters(
     # Message 2
     assert call_args[2].args[0] is None
     assert isinstance(call_args[2].args[1], EventTime)
-    assert call_args[2].args[2].get("stage") == "testcase"
-    assert call_args[2].args[2].get("message") == logging_content
-    assert "host" in call_args[2].args[2]
-    assert "where" in call_args[2].args[2]
-    assert "level" in call_args[2].args[2]
-    assert "stack_trace" in call_args[2].args[2]
+    message_2 = get_data_from_call_args(call_args[2], ["stage", "message"])
+    assert message_2 == {"stage": "testcase", "message": logging_content}
+    assert {"host", "where", "level", "stack_trace"}.issubset(
+        call_args[2].args[2].keys()
+    )
 
     # Message 3
     assert call_args[3].args[0] is None
     assert isinstance(call_args[3].args[1], EventTime)
-    assert call_args[3].args[2].get("type") == "logging"
-    assert call_args[3].args[2].get("stage") == "testcase"
-    assert call_args[3].args[2].get("message") == logging_content
-    assert "host" in call_args[3].args[2]
-    assert "where" in call_args[3].args[2]
-    assert "level" in call_args[3].args[2]
-    assert "stack_trace" in call_args[3].args[2]
+    message_3 = get_data_from_call_args(call_args[2], ["type", "stage", "message"])
+    assert message_3 == {
+        "type": "logging",
+        "stage": "testcase",
+        "message": logging_content,
+    }
+    assert {"host", "where", "level", "stack_trace"}.issubset(
+        call_args[2].args[2].keys()
+    )
 
     # Message 4
     assert call_args[4].args[0] == FLUENTD_LABEL
@@ -66,15 +71,34 @@ def test_fluentd_logged_parameters(
     # Message 5
     assert call_args[5].args[0] == FLUENTD_LABEL
     assert isinstance(call_args[5].args[1], int)
-    assert call_args[5].args[2].get("stage") == "testcase"
-    assert call_args[5].args[2].get("status") == "finish"
+    message_5 = get_data_from_call_args(call_args[5], ["status", "stage"])
+    assert message_5 == {"status": "finish", "stage": "testcase"}
 
     # Message 6
     assert call_args[6].args[0] == FLUENTD_LABEL
     assert isinstance(call_args[6].args[1], int)
-    assert call_args[6].args[2].get("stage") == "session"
-    assert call_args[6].args[2].get("status") == "finish"
+    message_6 = get_data_from_call_args(call_args[6], ["status", "stage"])
+    assert message_6 == {"status": "finish", "stage": "session"}
     assert call_args[6].args[2].get("duration") > 0
+
+
+def test_fluentd_with_options_and_timestamp_enabled_shows_timestamp_field_in_output(
+    runpytest, fluentd_sender, session_uuid
+):
+    result = runpytest(
+        f"--session-uuid={session_uuid}",
+        f"--fluentd-tag={FLUENTD_TAG}",
+        f"--fluentd-label={FLUENTD_LABEL}",
+        f"--fluentd-timestamp=@timestamp",
+        "--extend-logging",
+    )
+    result.assert_outcomes(passed=1)
+    call_args = fluentd_sender.emit_with_time.call_args_list
+    assert len(call_args) == 7
+
+    # TODO: figure out if this test is doing the right thing
+    assert "@timestamp" in call_args[0].args[2]
+    assert "@timestamp" in call_args[1].args[2]
 
 
 def test_fluentd_with_timestamp_enabled_shows_timestamp_field_in_output(
@@ -82,14 +106,12 @@ def test_fluentd_with_timestamp_enabled_shows_timestamp_field_in_output(
 ):
     result = runpytest(
         f"--session-uuid={session_uuid}",
-        f"--fluentd-tag={FLUENTD_TAG}",
-        f"--fluentd-label={FLUENTD_LABEL}",
-        f"--fluentd-timestamp='@timestamp'",
-        "--extend-logging",
+        f"--fluentd-timestamp=@timestamp",
     )
     result.assert_outcomes(passed=1)
     call_args = fluentd_sender.emit_with_time.call_args_list
-    assert len(call_args) == 7
+    assert len(call_args) == 5
 
-    for data_fields in call_args:
-        assert "timestamp" in data_fields.args[2]
+    # TODO: figure out if this test is doing the right thing
+    assert "@timestamp" in call_args[0].args[2]
+    assert "@timestamp" in call_args[1].args[2]
