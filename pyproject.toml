@@ -74,8 +74,7 @@ source = ["src", "*/site-packages"]
 fallback_version = "0.0.0"
 
 [tool.pytest.ini_options]
-#addopts = "-p no:fluent-logging -p pytester"
-addopts = "-p pytester"
+addopts = "-p no:fluent-logging -p pytester"
 log_level = "INFO"
 log_cli = false
 
