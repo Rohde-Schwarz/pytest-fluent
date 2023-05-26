@@ -1,22 +1,25 @@
 """pytest-fluent-logging plugin definition."""
 import logging
+import os
 import textwrap
 import time
 import typing
 import uuid
-import os
 from io import BytesIO
 
 import msgpack
 import pytest
-from fluent import event, sender
 from fluent.handler import FluentHandler, FluentRecordFormatter
-
-from .SettingFileLoaderAction import SettingFileLoaderAction
 
 from .additional_information import (
     get_additional_session_information,
     get_additional_test_information,
+)
+from .content_patcher import ContentPatcher
+from .event import Event
+from .setting_file_loader_action import (
+    SettingFileLoaderAction,
+    load_and_check_settings_file,
 )
 from .test_report import LogReport
 
@@ -41,24 +44,32 @@ class FluentLoggerRuntime(object):
         self._label = config.getoption("--fluentd-label")
         self._extend_logging = config.getoption("--extend-logging")
         self._add_docstrings = config.getoption("--add-docstrings")
+        stage_names = [method for method in dir(self) if method.startswith("pytest_")]
+        stage_names.append("logging")
+        self._content_patcher = ContentPatcher(
+            user_settings=config.getoption("--stage-settings"),
+            args_settings=config.option,
+            stage_names=stage_names,
+        )
+        tags = []
+        for value in self._content_patcher.user_settings.values():
+            tag = value.get("tag")
+            if not tag:
+                continue
+            tags.append(tag)
+        tags = set(tags)
+        self._event = Event(
+            tags, self._host, self._port, buffer_overflow_handler=overflow_handler
+        )
         self._log_reporter = LogReport(self.config)
-        self._setup_fluent_sender()
-        self._patch_logging()
+        self._patch_logging(
+            f"{self._content_patcher.user_settings['logging']['tag']}."
+            f"{self._content_patcher.user_settings['logging']['label']}"
+        )
 
-    def _setup_fluent_sender(self):
-        if self._host is None:
-            sender.setup(self._tag, buffer_overflow_handler=overflow_handler)
-        else:
-            sender.setup(
-                self._tag,
-                host=self._host,
-                port=self._port,
-                buffer_overflow_handler=overflow_handler,
-            )
-
-    def _patch_logging(self):
+    def _patch_logging(self, tag: str):
         if self._extend_logging:
-            extend_loggers(self._host, self._port, self._tag)
+            extend_loggers(self._host, self._port, tag)
 
     def _set_session_uid(
         self, id: typing.Optional[typing.Union[str, uuid.UUID]] = None
@@ -99,8 +110,10 @@ class FluentLoggerRuntime(object):
                 "stage": "session",
                 "sessionId": self.session_uid,
             }
+            data = self._content_patcher.patch(data)
             data.update(get_additional_session_information())
-            event.Event(self._label, data)
+            tag, label = self._content_patcher.get_tag_and_label()
+            self._event(tag, label, data)
 
     def pytest_runtest_logstart(self, nodeid: str, location: typing.Tuple[int, str]):
         """Custom hook for test start."""
@@ -114,8 +127,10 @@ class FluentLoggerRuntime(object):
                 "testId": self.test_uid,
                 "name": nodeid,
             }
+            data = self._content_patcher.patch(data)
             data.update(get_additional_test_information())
-            event.Event(self._label, data)
+            tag, label = self._content_patcher.get_tag_and_label()
+            self._event(tag, label, data)
 
     def pytest_runtest_setup(self, item: pytest.Item):
         """Custom hook for test setup."""
@@ -141,6 +156,7 @@ class FluentLoggerRuntime(object):
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_makereport(self, item: pytest.Item, call):
+        """Custom hook for make report."""
         report = (yield).get_result()
         docstring = item.stash.get(DOCSTRING_STASHKEY, None)
         report.stash = {}
@@ -150,10 +166,10 @@ class FluentLoggerRuntime(object):
         """Custom hook for logging results."""
         set_stage("testcase")
         if not self.config.getoption("collectonly"):
-            result_data = self._log_reporter(report)
-            if not result_data:
+            data = self._log_reporter(report)
+            if not data:
                 return
-            result_data.update(
+            data.update(
                 {
                     "stage": "testcase",
                     "when": report.when,
@@ -164,8 +180,10 @@ class FluentLoggerRuntime(object):
             if self._add_docstrings:
                 docstring = report.stash.get(DOCSTRING_KEY, None)
                 if docstring:
-                    result_data.update({"docstring": docstring})
-            event.Event(self._label, result_data)
+                    data.update({"docstring": docstring})
+            data = self._content_patcher.patch(data)
+            tag, label = self._content_patcher.get_tag_and_label()
+            self._event(tag, label, data)
 
     def pytest_runtest_logfinish(
         self,
@@ -175,16 +193,16 @@ class FluentLoggerRuntime(object):
         """Custom hook for test end."""
         set_stage("testcase")
         if not self.config.getoption("collectonly"):
-            event.Event(
-                self._label,
-                {
-                    "status": "finish",
-                    "stage": "testcase",
-                    "sessionId": self.session_uid,
-                    "testId": self.test_uid,
-                    "name": nodeid,
-                },
-            )
+            data = {
+                "status": "finish",
+                "stage": "testcase",
+                "sessionId": self.session_uid,
+                "testId": self.test_uid,
+                "name": nodeid,
+            }
+            data = self._content_patcher.patch(data)
+            tag, label = self._content_patcher.get_tag_and_label()
+            self._event(tag, label, data)
 
     def pytest_sessionfinish(
         self,
@@ -194,19 +212,19 @@ class FluentLoggerRuntime(object):
         """Custom hook for session end."""
         set_stage("session")
         if not self.config.getoption("collectonly"):
-            event.Event(
-                self._label,
-                {
-                    "status": "finish",
-                    "duration": time.time() - self._session_start_time,
-                    "stage": "session",
-                    "sessionId": self.session_uid,
-                },
-            )
+            data = {
+                "status": "finish",
+                "duration": time.time() - self._session_start_time,
+                "stage": "session",
+                "sessionId": self.session_uid,
+            }
+            data = self._content_patcher.patch(data)
+            tag, label = self._content_patcher.get_tag_and_label()
+            self._event(tag, label, data)
 
 
-stage: str = "session"
-fluent_runtime: typing.Optional[FluentLoggerRuntime] = None
+STAGE: str = "session"
+FLUENT_RUNTIME: typing.Optional[FluentLoggerRuntime] = None
 
 #####################################################
 # Setup
@@ -255,7 +273,9 @@ def pytest_addoption(parser):
     group.addoption(
         "--stage-settings",
         type=str,
-        default=os.path.join(os.path.dirname(__file__), "data", "default.stage.json"),
+        default=load_and_check_settings_file(
+            os.path.join(os.path.dirname(__file__), "data", "default.stage.json")
+        ),
         action=SettingFileLoaderAction,
         help="Stage setting description JSON or YAML file path or string object.",
     )
@@ -263,20 +283,20 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     """Extend pytest configuration."""
-    global fluent_runtime
+    global FLUENT_RUNTIME
     config.fluent = FluentLoggerRuntime(config)
     config.pluginmanager.register(config.fluent, "fluent-reporter-runtime")
-    fluent_runtime = config.fluent
+    FLUENT_RUNTIME = config.fluent
 
 
 def pytest_unconfigure(config):
     """Unregister runtime from pytest."""
-    global fluent_runtime
+    global FLUENT_RUNTIME
     fluent = getattr(config, "fluent", None)
     if fluent:
         del config.fluent
         config.pluginmanager.unregister(fluent)
-        fluent_runtime = None
+        FLUENT_RUNTIME = None
 
 
 #####################################################
@@ -379,13 +399,13 @@ def overflow_handler(pendings):
 
 def set_stage(val: str) -> None:
     """Set the current execution stage."""
-    global stage
-    stage = val
+    global STAGE
+    STAGE = val
 
 
 def get_stage() -> str:
     """Get the current execution stage."""
-    return stage
+    return STAGE
 
 
 # Unique identifiers
@@ -398,16 +418,16 @@ def create_unique_identifier():
 
 def get_session_uid() -> typing.Optional[str]:
     """Get current session UID."""
-    if fluent_runtime is None:
+    if FLUENT_RUNTIME is None:
         return None
-    return typing.cast(FluentLoggerRuntime, fluent_runtime).session_uid
+    return typing.cast(FluentLoggerRuntime, FLUENT_RUNTIME).session_uid
 
 
 def get_test_uid() -> typing.Optional[str]:
     """Get current test UID."""
-    if fluent_runtime is None:
+    if FLUENT_RUNTIME is None:
         return None
-    return typing.cast(FluentLoggerRuntime, fluent_runtime).test_uid
+    return typing.cast(FluentLoggerRuntime, FLUENT_RUNTIME).test_uid
 
 
 # Docstrings

@@ -2,7 +2,7 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "patternProperties": {
-        "all|pytest_runtest_logstart|pytest_runtest_logreport|pytest_runtest_logfinish": {
+        "all|pytest_runtest_logstart|pytest_runtest_logreport|pytest_runtest_logfinish|logging": {
             "$ref": "#/definitions/AdditionalProperties"
         }
     },
@@ -35,6 +35,12 @@
                 "add": {
                     "type": "object",
                     "additionalProperties": {
+                        "$ref": "#/definitions/RegexString"
+                    }
+                },
+                "drop": {
+                    "type": "array",
+                    "items": {
                         "$ref": "#/definitions/RegexString"
                     }
                 }

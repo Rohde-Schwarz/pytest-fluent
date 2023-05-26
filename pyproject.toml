@@ -34,7 +34,7 @@ dependencies = [
     "six",
     "fluent-logger",
     "jsonschema",
-    "ruamel.yaml"
+    "ruamel.yaml",
 ]
 dynamic = ["version"]
 

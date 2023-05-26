@@ -2,8 +2,8 @@ import argparse
 import os
 
 import pytest
-from pytest_fluent.SettingFileLoaderAction import SettingFileLoaderAction
 
+from pytest_fluent.setting_file_loader_action import SettingFileLoaderAction
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
