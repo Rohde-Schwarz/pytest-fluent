@@ -1,4 +1,5 @@
 """pytest-fluent-logging plugin definition."""
+import datetime
 import logging
 import os
 import textwrap
@@ -42,6 +43,7 @@ class FluentLoggerRuntime(object):
         self._port = config.getoption("--fluentd-port")
         self._tag = config.getoption("--fluentd-tag")
         self._label = config.getoption("--fluentd-label")
+        self._timestamp = config.getoption("--fluentd-timestamp")
         self._extend_logging = config.getoption("--extend-logging")
         self._add_docstrings = config.getoption("--add-docstrings")
         stage_names = [method for method in dir(self) if method.startswith("pytest_")]
@@ -84,6 +86,10 @@ class FluentLoggerRuntime(object):
         else:
             raise ValueError("Unique identifier is not in a valid format.")
 
+    def set_timestamp_information(self, data: dict):
+        if self._timestamp is not None:
+            data.update({self._timestamp: f"{datetime.datetime.utcnow().isoformat()}"})
+
     @property
     def session_uid(
         self,
@@ -112,6 +118,7 @@ class FluentLoggerRuntime(object):
             }
             data = self._content_patcher.patch(data)
             data.update(get_additional_session_information())
+            self.set_timestamp_information(data=data)
             tag, label = self._content_patcher.get_tag_and_label()
             self._event(tag, label, data)
 
@@ -129,6 +136,7 @@ class FluentLoggerRuntime(object):
             }
             data = self._content_patcher.patch(data)
             data.update(get_additional_test_information())
+            self.set_timestamp_information(data=data)
             tag, label = self._content_patcher.get_tag_and_label()
             self._event(tag, label, data)
 
@@ -159,8 +167,7 @@ class FluentLoggerRuntime(object):
         """Custom hook for make report."""
         report = (yield).get_result()
         docstring = item.stash.get(DOCSTRING_STASHKEY, None)
-        report.stash = {}
-        report.stash[DOCSTRING_KEY] = docstring
+        report.stash = {DOCSTRING_KEY: docstring}
 
     def pytest_runtest_logreport(self, report: pytest.TestReport):
         """Custom hook for logging results."""
@@ -181,6 +188,7 @@ class FluentLoggerRuntime(object):
                 docstring = report.stash.get(DOCSTRING_KEY, None)
                 if docstring:
                     data.update({"docstring": docstring})
+            self.set_timestamp_information(data=data)
             data = self._content_patcher.patch(data)
             tag, label = self._content_patcher.get_tag_and_label()
             self._event(tag, label, data)
@@ -200,6 +208,7 @@ class FluentLoggerRuntime(object):
                 "testId": self.test_uid,
                 "name": nodeid,
             }
+            self.set_timestamp_information(data=data)
             data = self._content_patcher.patch(data)
             tag, label = self._content_patcher.get_tag_and_label()
             self._event(tag, label, data)
@@ -218,6 +227,7 @@ class FluentLoggerRuntime(object):
                 "stage": "session",
                 "sessionId": self.session_uid,
             }
+            self.set_timestamp_information(data=data)
             data = self._content_patcher.patch(data)
             tag, label = self._content_patcher.get_tag_and_label()
             self._event(tag, label, data)
@@ -259,6 +269,11 @@ def pytest_addoption(parser):
         "--fluentd-label",
         default="pytest",
         help="Custom Fluentd label (default: %(default)s)",
+    )
+    group.addoption(
+        "--fluentd-timestamp",
+        default=None,
+        help="Custom Fluentd timestamp (default: %(default)s)",
     )
     group.addoption(
         "--extend-logging",
