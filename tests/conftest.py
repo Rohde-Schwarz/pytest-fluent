@@ -1,9 +1,21 @@
 import uuid
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
+import pytest_fluent.event
+
 plugin_name = "pytest_fluent"
+
+
+def isinstance_patch(
+    __obj: object,
+    __class_or_tuple,
+) -> bool:
+    """Patch for isinstance."""
+    if isinstance(__obj, MagicMock):
+        return True
+    return isinstance(__obj, __class_or_tuple)
 
 
 @pytest.fixture(scope="session")
@@ -53,14 +65,15 @@ def runpytest(pytester: pytest.Pytester, logging_content):
 
 
 @pytest.fixture()
-def run_mocked_pytest(runpytest):
-    """create a temporary pytest environment with FluentSender mock."""
-
-    with patch("fluent.sender.FluentSender") as sender:
-        yield runpytest, sender
+def fluentd_sender():
+    """Get FluentSender mock."""
+    with patch("pytest_fluent.event.FluentSender") as sender:
+        yield sender.return_value
 
 
 @pytest.fixture()
-def fluentd_sender():
-    with patch("fluent.sender.FluentSender") as sender:
-        yield sender.return_value
+def run_mocked_pytest(runpytest, fluentd_sender):
+    """Create a temporary pytest environment with FluentSender mock."""
+
+    with patch.object(pytest_fluent.event, "isinstance", isinstance_patch):
+        yield runpytest, fluentd_sender

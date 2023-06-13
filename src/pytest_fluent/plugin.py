@@ -251,7 +251,8 @@ def pytest_addoption(parser):
     )
     group.addoption(
         "--fluentd-host",
-        default=None,
+        default="localhost",
+        type=str,
         help="Fluentd remote host. Defaults to a local Fluentd session",
     )
     group.addoption(

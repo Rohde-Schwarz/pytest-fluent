@@ -4,7 +4,7 @@ import logging
 import time
 import typing
 
-from fluent import sender
+from fluent.sender import FluentSender
 
 LOGGER = logging.getLogger(__package__)
 
@@ -26,8 +26,7 @@ class Event:
     ) -> None:
         """Initialize custom event class."""
         self.senders = {
-            tag: sender.FluentSender(tag=tag, host=host, port=port, **kwargs)
-            for tag in tags
+            tag: FluentSender(tag=tag, host=host, port=port, **kwargs) for tag in tags
         }
 
     def __call__(self, tag: str, label: str, data: dict, **kwargs):
@@ -40,8 +39,9 @@ class Event:
         """
         assert isinstance(data, dict), "data must be a dict"
         sender_ = self.senders.get(tag)
-        if not sender_:
+        if sender_ is None or isinstance(sender_, FluentSender):
             LOGGER.warning(f"Could not retrieve fluent instance for tag {tag}")
+            return
         timestamp = kwargs.get("time", int(time.time()))
         if not sender_.emit_with_time(label, timestamp, data):
             LOGGER.warning(f"Could not send data via fluent for tag {tag}: {data}")

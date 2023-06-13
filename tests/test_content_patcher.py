@@ -4,6 +4,7 @@ import argparse
 import os
 import typing
 import uuid
+from unittest.mock import patch
 
 import pytest
 
@@ -125,7 +126,7 @@ def stage_content_patched() -> dict:
 
 @pytest.fixture
 def namespace() -> argparse.Namespace:
-    return argparse.Namespace(**{"fluentd-tag": "pytest"})
+    return argparse.Namespace(**{"fluentd_tag": "pytest"})
 
 
 def test_is_reference_string():
@@ -139,9 +140,9 @@ def test_get_env_content__no_env_string():
 
 def test_get_env_content__env_string():
     result = "test"
-    os.environ["USE_ENV"] = result
-    assert ContentPatcher._get_env_content("$USE_ENV") == result
-    assert ContentPatcher._get_env_content("${USE_ENV}") == result
+    with patch.dict(os.environ, {"USE_ENV": result}):
+        assert ContentPatcher._get_env_content("$USE_ENV") == result
+        assert ContentPatcher._get_env_content("${USE_ENV}") == result
 
 
 def test_get_env_content__env_string_no_content():
@@ -163,8 +164,10 @@ def test_get_args_content__retrieve_no_content(stage_content, namespace, stage_n
 
 
 def test_stage_settings(user_settings, user_settings_patched, stage_names):
-    patched = ContentPatcher._stage_settings(user_settings, stage_names)
-    assert patched == user_settings_patched
+    patched = ContentPatcher(
+        user_settings=user_settings, args_settings=namespace, stage_names=stage_names
+    )
+    assert patched._user_settings == user_settings_patched
 
 
 @pytest.mark.parametrize(

@@ -2,7 +2,7 @@ TEST_DOCSTRING = "This test will always pass."
 
 
 def test_add_docstrings(run_mocked_pytest, session_uuid):
-    runpytest, sender = run_mocked_pytest
+    runpytest, fluent_sender = run_mocked_pytest
     result = runpytest(
         f"--session-uuid={session_uuid}",
         "--add-docstrings",
@@ -14,7 +14,6 @@ def test_add_docstrings(run_mocked_pytest, session_uuid):
         assert True
     """,
     )
-    fluent_sender = sender.return_value
     call_args = fluent_sender.emit_with_time.call_args_list
     result.assert_outcomes(passed=1)
     assert len(call_args) > 0
@@ -24,7 +23,7 @@ def test_add_docstrings(run_mocked_pytest, session_uuid):
 
 
 def test_docstrings_disabled(run_mocked_pytest, session_uuid):
-    runpytest, sender = run_mocked_pytest
+    runpytest, fluent_sender = run_mocked_pytest
     result = runpytest(
         f"--session-uuid={session_uuid}",
         pyfile=f"""
@@ -35,7 +34,6 @@ def test_docstrings_disabled(run_mocked_pytest, session_uuid):
         assert True
     """,
     )
-    fluent_sender = sender.return_value
     call_args = fluent_sender.emit_with_time.call_args_list
     result.assert_outcomes(passed=1)
     assert len(call_args) > 0
@@ -44,7 +42,7 @@ def test_docstrings_disabled(run_mocked_pytest, session_uuid):
 
 
 def test_missing_docstring(run_mocked_pytest, session_uuid):
-    runpytest, sender = run_mocked_pytest
+    runpytest, fluent_sender = run_mocked_pytest
     result = runpytest(
         f"--session-uuid={session_uuid}",
         "--add-docstrings",
@@ -53,7 +51,6 @@ def test_missing_docstring(run_mocked_pytest, session_uuid):
         assert True
     """,
     )
-    fluent_sender = sender.return_value
     call_args = fluent_sender.emit_with_time.call_args_list
     result.assert_outcomes(passed=1)
     assert len(call_args) > 0
