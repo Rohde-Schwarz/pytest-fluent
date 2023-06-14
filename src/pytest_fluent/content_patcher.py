@@ -93,8 +93,8 @@ class ContentPatcher:
                 Defaults to None.
 
         Returns:
-                str: Patch dictionary with the user provided stage settings.
-        """
+                dict: Patched dictionary with the user provided stage settings.
+        """  # noqa
         if stage_name is None:
             stage_name = inspect.stack()[1][3]
 
