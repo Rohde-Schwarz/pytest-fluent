@@ -53,13 +53,13 @@ class FluentLoggerRuntime(object):
             args_settings=config.option,
             stage_names=stage_names,
         )
-        tags = []
+        tags: typing.List[str] = []
         for value in self._content_patcher.user_settings.values():
             tag = value.get("tag")
             if not tag:
                 continue
             tags.append(tag)
-        tags = set(tags)
+        tags = list(set(tags))
         self._event = Event(
             tags, self._host, self._port, buffer_overflow_handler=overflow_handler
         )
@@ -223,7 +223,9 @@ class FluentLoggerRuntime(object):
         if not self.config.getoption("collectonly"):
             data = {
                 "status": "finish",
-                "duration": time.time() - self._session_start_time,
+                "duration": time.time() - 0
+                if self._session_start_time is None
+                else self._session_start_time,
                 "stage": "session",
                 "sessionId": self.session_uid,
             }

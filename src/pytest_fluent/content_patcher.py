@@ -166,6 +166,6 @@ class ContentPatcher:
         args_match = re.findall(r"^<([\w-]+)>$", value)
         if not args_match:
             return ""
-        args_match = args_match[0].replace("-", "_")
-        args_value = getattr(self._args_settings, args_match, "")
+        args_string = args_match[0].replace("-", "_")
+        args_value = getattr(self._args_settings, args_string, "")
         return args_value

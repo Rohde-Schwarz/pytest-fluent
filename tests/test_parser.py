@@ -43,7 +43,7 @@ def test_yaml_file(default):
 
 def test_xml_error():
     with pytest.raises(ValueError):
-        args = parser.parse_args(
+        parser.parse_args(
             [
                 "--stage-settings",
                 os.path.join(os.path.dirname(__file__), "data", "default.xml"),
