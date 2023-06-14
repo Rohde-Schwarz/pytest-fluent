@@ -86,7 +86,7 @@ class FluentLoggerRuntime(object):
         else:
             raise ValueError("Unique identifier is not in a valid format.")
 
-    def set_timestamp_information(self, data: dict):
+    def _set_timestamp_information(self, data: dict):
         if self._timestamp is not None:
             data.update({self._timestamp: f"{datetime.datetime.utcnow().isoformat()}"})
 
@@ -118,7 +118,7 @@ class FluentLoggerRuntime(object):
             }
             data = self._content_patcher.patch(data)
             data.update(get_additional_session_information())
-            self.set_timestamp_information(data=data)
+            self._set_timestamp_information(data=data)
             tag, label = self._content_patcher.get_tag_and_label()
             self._event(tag, label, data)
 
@@ -136,7 +136,7 @@ class FluentLoggerRuntime(object):
             }
             data = self._content_patcher.patch(data)
             data.update(get_additional_test_information())
-            self.set_timestamp_information(data=data)
+            self._set_timestamp_information(data=data)
             tag, label = self._content_patcher.get_tag_and_label()
             self._event(tag, label, data)
 
@@ -188,7 +188,7 @@ class FluentLoggerRuntime(object):
                 docstring = report.stash.get(DOCSTRING_KEY, None)
                 if docstring:
                     data.update({"docstring": docstring})
-            self.set_timestamp_information(data=data)
+            self._set_timestamp_information(data=data)
             data = self._content_patcher.patch(data)
             tag, label = self._content_patcher.get_tag_and_label()
             self._event(tag, label, data)
@@ -208,7 +208,7 @@ class FluentLoggerRuntime(object):
                 "testId": self.test_uid,
                 "name": nodeid,
             }
-            self.set_timestamp_information(data=data)
+            self._set_timestamp_information(data=data)
             data = self._content_patcher.patch(data)
             tag, label = self._content_patcher.get_tag_and_label()
             self._event(tag, label, data)
@@ -229,7 +229,7 @@ class FluentLoggerRuntime(object):
                 "stage": "session",
                 "sessionId": self.session_uid,
             }
-            self.set_timestamp_information(data=data)
+            self._set_timestamp_information(data=data)
             data = self._content_patcher.patch(data)
             tag, label = self._content_patcher.get_tag_and_label()
             self._event(tag, label, data)
