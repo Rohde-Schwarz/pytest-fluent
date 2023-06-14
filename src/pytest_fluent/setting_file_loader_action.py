@@ -16,11 +16,11 @@ class SettingFileLoaderAction(argparse.Action):
         setattr(args, self.dest, parameter)
 
 
-def load_and_check_settings_file(file_name: os.PathLike):
+def load_and_check_settings_file(file_name: str):
     """Load settings file and check content against schema.
 
     Args:
-        file_name (os.PathLike): Path to settings file.
+        file_name (str): Path to settings file.
 
     Raises:
         ValueError: File type not supported.

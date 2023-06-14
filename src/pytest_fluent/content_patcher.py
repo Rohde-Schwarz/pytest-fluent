@@ -73,7 +73,8 @@ class ContentPatcher:
         """Return the tag for the corresponding stage.
 
         Args:
-            stage_name (typing.Optional[str], optional): Current stage. Defaults to None.
+            stage_name (typing.Optional[str], optional): Current stage.
+                Defaults to None.
 
         Returns:
             typing.Tuple[str, str]: Tag string, Label string.

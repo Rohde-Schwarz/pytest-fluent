@@ -11,28 +11,36 @@ FLUENTD_LABEL = "pytest"
 FAKE_TEST_UUID = "6d653fee-0c6a-4923-9216-dfc949bd05a0"
 
 
+@pytest.fixture
+def pyfile_testcase(logging_content):
+    return f"""
+import logging
+
+def test_base():
+    LOGGER = logging.getLogger()
+    LOGGER.info('{logging_content}')
+    LOGGER.warning('{logging_content}')
+    assert True
+"""
+
+
 def get_data_from_call_args(call_args, fields: typing.List[str]) -> typing.Dict:
     return {field: call_args.args[2].get(field) for field in fields}
 
 
-@pytest.fixture(name="monkeypatched_uuid4")
-def monkeypatched_uuid4_fixture(monkeypatch):
-    def myuuid4():
-        return uuid.UUID(FAKE_TEST_UUID)
-
-    monkeypatch.setattr(uuid, "uuid4", myuuid4)
-
-
 def test_fluentd_logged_parameters(
-    monkeypatched_uuid4, runpytest, fluentd_sender, session_uuid, logging_content
+    monkeypatch, run_mocked_pytest, session_uuid, logging_content, pyfile_testcase
 ):
+    runpytest, fluent_sender = run_mocked_pytest
+    monkeypatch.setattr(uuid, "uuid4", lambda: uuid.UUID(FAKE_TEST_UUID))
     result = runpytest(
         f"--session-uuid={session_uuid}",
         f"--fluentd-tag={FLUENTD_TAG}",
         f"--fluentd-label={FLUENTD_LABEL}",
         "--extend-logging",
+        pyfile=pyfile_testcase,
     )
-    call_args = fluentd_sender.emit_with_time.call_args_list
+    call_args = fluent_sender.emit_with_time.call_args_list
     result.assert_outcomes(passed=1)
     assert len(call_args) == 7
 
@@ -102,14 +110,16 @@ def is_pytest_message(args):
 
 
 def test_fluentd_with_options_and_timestamp_enabled_shows_timestamp_field_in_output(
-    runpytest, fluentd_sender, session_uuid
+    run_mocked_pytest, fluentd_sender, session_uuid, pyfile_testcase
 ):
+    runpytest, fluentd_sender = run_mocked_pytest
     result = runpytest(
         f"--session-uuid={session_uuid}",
         f"--fluentd-tag={FLUENTD_TAG}",
         f"--fluentd-label={FLUENTD_LABEL}",
-        f"--fluentd-timestamp=@timestamp",
+        "--fluentd-timestamp=@timestamp",
         "--extend-logging",
+        pyfile=pyfile_testcase,
     )
     result.assert_outcomes(passed=1)
     call_args = fluentd_sender.emit_with_time.call_args_list
@@ -120,11 +130,13 @@ def test_fluentd_with_options_and_timestamp_enabled_shows_timestamp_field_in_out
 
 
 def test_fluentd_with_timestamp_enabled_shows_timestamp_field_in_output(
-    runpytest, fluentd_sender, session_uuid
+    run_mocked_pytest, session_uuid, pyfile_testcase
 ):
+    runpytest, fluentd_sender = run_mocked_pytest
     result = runpytest(
         f"--session-uuid={session_uuid}",
-        f"--fluentd-timestamp=@timestamp",
+        "--fluentd-timestamp=@timestamp",
+        pyfile=pyfile_testcase,
     )
     result.assert_outcomes(passed=1)
     call_args = fluentd_sender.emit_with_time.call_args_list

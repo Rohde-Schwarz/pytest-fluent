@@ -1,10 +1,8 @@
 """Tests for ContentPatcher."""
 # pylint: disable=W0212, C0116, W0621
 import argparse
-import os
 import typing
 import uuid
-from unittest.mock import patch
 
 import pytest
 
@@ -138,11 +136,11 @@ def test_get_env_content__no_env_string():
     assert ContentPatcher._get_env_content("test") == ""
 
 
-def test_get_env_content__env_string():
+def test_get_env_content__env_string(monkeypatch):
     result = "test"
-    with patch.dict(os.environ, {"USE_ENV": result}):
-        assert ContentPatcher._get_env_content("$USE_ENV") == result
-        assert ContentPatcher._get_env_content("${USE_ENV}") == result
+    monkeypatch.setenv("USE_ENV", result)
+    assert ContentPatcher._get_env_content("$USE_ENV") == result
+    assert ContentPatcher._get_env_content("${USE_ENV}") == result
 
 
 def test_get_env_content__env_string_no_content():

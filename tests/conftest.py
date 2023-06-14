@@ -2,6 +2,7 @@ import uuid
 from unittest.mock import MagicMock, patch
 
 import pytest
+from fluent import handler
 
 import pytest_fluent.event
 
@@ -65,9 +66,12 @@ def runpytest(pytester: pytest.Pytester, logging_content):
 
 
 @pytest.fixture()
-def fluentd_sender():
+def fluentd_sender(monkeypatch):
     """Get FluentSender mock."""
-    with patch("pytest_fluent.event.FluentSender") as sender:
+    with patch("pytest_fluent.event.FluentSender") as sender, patch.object(
+        pytest_fluent.event, "isinstance", isinstance_patch
+    ):
+        monkeypatch.setattr(handler.sender, "FluentSender", sender)
         yield sender.return_value
 
 
@@ -75,5 +79,4 @@ def fluentd_sender():
 def run_mocked_pytest(runpytest, fluentd_sender):
     """Create a temporary pytest environment with FluentSender mock."""
 
-    with patch.object(pytest_fluent.event, "isinstance", isinstance_patch):
-        yield runpytest, fluentd_sender
+    return runpytest, fluentd_sender
