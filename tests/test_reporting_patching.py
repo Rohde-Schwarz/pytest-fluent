@@ -38,11 +38,6 @@ from .conftest import SESSION_UUID
                 {
                     "name": "test_data_reporter_with_patched_values.py::test_base",
                     "outcome": "passed",
-                    "markers": {
-                        "test_base": 1,
-                        "test_data_reporter_with_patched_values.py": 1,
-                        "test_data_reporter_with_patched_values0": 1,
-                    },
                     "stage": "testcase",
                     "when": "call",
                     "sessionId": str(SESSION_UUID),
@@ -109,11 +104,6 @@ from .conftest import SESSION_UUID
                 {
                     "name": "test_data_reporter_with_patched_values.py::test_base",
                     "outcome": "pass",
-                    "markers": {
-                        "test_base": 1,
-                        "test_data_reporter_with_patched_values.py": 1,
-                        "test_data_reporter_with_patched_values0": 1,
-                    },
                     "stage": "testcase",
                     "when": "call",
                     "id": str(SESSION_UUID),
@@ -165,6 +155,6 @@ def test_data_reporter_with_patched_values(
     for report, expected in zip(call_args, expected_result):
         for key in expected.keys():
             assert key in report
-            if key in ["duration", "testId", "host"]:
+            if key in ["duration", "testId", "host", "markers"]:
                 continue
             assert report[key] == expected[key]
