@@ -235,9 +235,14 @@ class FluentLoggerRuntime(object):
         if not self.config.getoption("collectonly"):
             data = {
                 "status": "finish",
-                "duration": time.time() - 0
-                if self._session_start_time is None
-                else self._session_start_time,
+                "duration": (
+                    time.time()
+                    - (
+                        0
+                        if self._session_start_time is None
+                        else self._session_start_time
+                    )
+                ),
                 "stage": "session",
                 "sessionId": self.session_uid,
             }
