@@ -84,7 +84,12 @@ class ContentPatcher:
         stage_info = self._user_settings.get(stage_name, {})
         return stage_info["tag"], stage_info["label"]
 
-    def patch(self, content: dict, stage_name: typing.Optional[str] = None) -> dict:
+    def patch(
+        self,
+        content: dict,
+        stage_name: typing.Optional[str] = None,
+        ignore_entries: typing.List[str] = [],
+    ) -> dict:
         """Patch the content with the provided settings for each stage.
 
         Args:
@@ -99,6 +104,7 @@ class ContentPatcher:
             stage_name = inspect.stack()[1][3]
 
         stage_info = self._user_settings.get(stage_name, {})
+        stage_info = {k: v for k, v in stage_info.items() if k not in ignore_entries}
         if not stage_info:
             return content
         return self._patch_stage_content(content, stage_info)
@@ -106,10 +112,12 @@ class ContentPatcher:
     @staticmethod
     def _patch_stage_content(stage_content: dict, user_settings: dict) -> dict:
         stage_content_patched = stage_content.copy()
-        stage_content_patched["tag"] = user_settings["tag"]
-        stage_content_patched["label"] = user_settings["label"]
+        if "tag" in user_settings:
+            stage_content_patched["tag"] = user_settings["tag"]
+        if "label" in user_settings:
+            stage_content_patched["label"] = user_settings["label"]
         if "replace" in user_settings:
-            for key, value in user_settings["replace"].items():
+            for key, value in user_settings.get("replace", {}).items():
                 if key in stage_content_patched:
                     tmp = stage_content_patched[key]
                     stage_content_patched[value] = tmp

@@ -64,14 +64,26 @@ class FluentLoggerRuntime(object):
             tags, self._host, self._port, buffer_overflow_handler=overflow_handler
         )
         self._log_reporter = LogReport(self.config)
-        self._patch_logging(
-            f"{self._content_patcher.user_settings['logging']['tag']}."
-            f"{self._content_patcher.user_settings['logging']['label']}"
-        )
+        self._patch_logging()
 
-    def _patch_logging(self, tag: str):
-        if self._extend_logging:
-            extend_loggers(self._host, self._port, tag)
+    def _patch_logging(self):
+        if not self._extend_logging:
+            return
+        tag = self._content_patcher.user_settings.get("logging", {}).get("tag")
+        if not tag:
+            raise ValueError(
+                "Tag for logging was not set. Please set either specific tag value for \
+                    key 'logging' or use the 'all' object in stage settings file."
+            )
+        label = self._content_patcher.user_settings.get("logging", {}).get("label")
+        if label:
+            tag = f"{tag}.{label}"
+        extend_loggers(
+            self._host,
+            self._port,
+            tag,
+            self._content_patcher,
+        )
 
     def _set_session_uid(
         self, id: typing.Optional[typing.Union[str, uuid.UUID]] = None
@@ -330,14 +342,14 @@ def get_logger(request):
     port = config.getoption("--fluentd-port")
     tag = config.getoption("--fluentd-tag")
 
-    def get_logger(name=None):
+    def get_logger_wrapper(name=None):
         logger = logging.getLogger(name)
         if name is None:
             return logger
         add_handler(host, port, tag, logger)
         return logger
 
-    return get_logger
+    return get_logger_wrapper
 
 
 @pytest.fixture
@@ -363,9 +375,10 @@ def test_uid() -> typing.Optional[str]:
 class RecordFormatter(FluentRecordFormatter):
     """Extension of FluentRecordFormatter in order to add unique ID's"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, patcher: typing.Optional[ContentPatcher], *args, **kwargs):
         """Specific initilization."""
         super(RecordFormatter, self).__init__(*args, **kwargs)
+        self.content_patcher = patcher
 
     def format(self, record):
         """Extend formatting for Fluentd handler."""
@@ -375,34 +388,41 @@ class RecordFormatter(FluentRecordFormatter):
         data["sessionId"] = get_session_uid()
         data["testId"] = get_test_uid()
         data["stage"] = get_stage()
+        if self.content_patcher:
+            data = self.content_patcher.patch(data, "logging", ["tag", "label"])
         return data
 
 
-def extend_loggers(host, port, tag) -> None:
+def extend_loggers(host, port, tag, patcher: ContentPatcher) -> None:
     """Extend Python logging with a Fluentd handler."""
-    modify_logger(host, port, tag, None)
-    modify_logger(host, port, tag, "fluent")
+    modify_logger(host, port, tag, None, patcher)
+    modify_logger(host, port, tag, "fluent", patcher)
 
 
-def modify_logger(host, port, tag, name=None) -> None:
+def modify_logger(
+    host, port, tag, name=None, patcher: typing.Optional[ContentPatcher] = None
+) -> None:
     """Extend Python logging with a Fluentd handler."""
     logger = logging.getLogger(name)
-    add_handler(host, port, tag, logger)
+    add_handler(host, port, tag, logger, patcher)
 
 
-def add_handler(host, port, tag, logger):
+def add_handler(
+    host, port, tag, logger, patcher: typing.Optional[ContentPatcher] = None
+):
     """Add handler to a specific logger."""
     handler = FluentHandler(
         tag, host=host, port=port, buffer_overflow_handler=overflow_handler
     )
     formatter = RecordFormatter(
+        patcher,
         {
             "type": "logging",
             "host": "%(hostname)s",
             "where": "%(module)s.%(funcName)s",
             "level": "%(levelname)s",
             "stack_trace": "%(exc_text)s",
-        }
+        },
     )
     handler.setFormatter(formatter)
     logger.addHandler(handler)

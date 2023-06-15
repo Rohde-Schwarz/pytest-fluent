@@ -49,6 +49,9 @@ def user_settings() -> dict:
             "label": "testcase",
             "add": {"stop_info": "Testcase finished"},
         },
+        "logging": {
+            "replace": {"message": "msg", "sessionId": "id"},
+        },
     }
 
 
@@ -107,7 +110,7 @@ def user_settings_patched() -> dict:
         "logging": {
             "tag": "run",
             "label": "pytest",
-            "replace": {"status": "state", "sessionId": "id"},
+            "replace": {"message": "msg", "sessionId": "id"},
         },
     }
 
@@ -248,6 +251,59 @@ def test_stage_settings(user_settings, user_settings_patched, stage_names):
 def test_patch_content(to_patch, expected, stage, user_settings_patched):
     patched = ContentPatcher._patch_stage_content(
         to_patch, user_settings_patched[stage]
+    )
+    assert patched == expected
+
+
+@pytest.mark.parametrize(
+    "to_patch,expected,stage,ignore",
+    [
+        (
+            {
+                "status": "start",
+                "stage": "session",
+                "sessionId": UNIQUE_IDENTIFIER,
+            },
+            {
+                "tag": "run",
+                "label": "test",
+                "state": "start",
+                "stage": "session",
+                "id": UNIQUE_IDENTIFIER,
+                "start_info": "Pytest started",
+            },
+            "pytest_sessionstart",
+            [],
+        ),
+        (
+            {
+                "type": "logging",
+                "stage": "testcase",
+                "message": "Logged from test_base",
+                "sessionId": UNIQUE_IDENTIFIER,
+            },
+            {
+                "type": "logging",
+                "stage": "testcase",
+                "id": UNIQUE_IDENTIFIER,
+                "msg": "Logged from test_base",
+            },
+            "logging",
+            ["tag", "label"],
+        ),
+    ],
+)
+def test_patch(
+    to_patch,
+    expected,
+    stage,
+    ignore,
+    user_settings,
+    namespace,
+    stage_names,
+):
+    patched = ContentPatcher(user_settings, namespace, stage_names).patch(
+        to_patch, stage, ignore
     )
     assert patched == expected
 
