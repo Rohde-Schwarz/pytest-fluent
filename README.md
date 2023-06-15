@@ -22,7 +22,8 @@ pip install pytest-fluent
 
 ## Usage
 
-pytest-fluent-logging forwards meta data from pytest to Fluentd for further processing. The meta data are 
+pytest-fluent-logging forwards meta data from pytest to Fluentd for further processing. The meta data are
+
 * unique session ID
 * unique test ID
 * status of the session respectively test case
@@ -31,7 +32,7 @@ pytest-fluent-logging forwards meta data from pytest to Fluentd for further proc
 * `record_property` entries
 * custom testcase information
 * custom session information
-  
+
 Furthermore, the Python logging instance can be extended in order to forward test case runtime logging.
 
 ```python
@@ -43,7 +44,7 @@ def test_my_runtime_log():
     assert value == 1
 ```
 
-or 
+or
 
 ```python
 from logging import getLogger
@@ -104,22 +105,22 @@ def provide_more_test_information() -> dict:
 
 The pytest CLI can be called with the following arguments in order to configure fluent-logging.
 
-| argument            | description                                                                        | default  |
-|---------------------|------------------------------------------------------------------------------------|----------|
-| --session-uuid      | Use a custom externally created UUID, e.g. link a CI job with the pytest session.  |          |
-| --fluentd-host      | Fluentd host address. If not provided, a local Fluentd instance will be called.    |          |
-| --fluentd-port      | Fluent host port                                                                   | 24224    |
-| --fluentd-tag       | Set a custom Fluentd tag                                                           | 'test'   |
-| --fluentd-label     | Set a custom Fluentd label                                                         | 'pytest' |
-| --fluentd-timestamp | Specify a Fluentd timestamp                                                        | None     |
-| --extend-logging    | Extend the Python logging with a Fluent handler                                    | False    |
-| --add-docstrings    | Add test docstrings to testcase call messages                                      |          |
+| argument            | description                                                                       | default  |
+| ------------------- | --------------------------------------------------------------------------------- | -------- |
+| --session-uuid      | Use a custom externally created UUID, e.g. link a CI job with the pytest session. |          |
+| --fluentd-host      | Fluentd host address. If not provided, a local Fluentd instance will be called.   |          |
+| --fluentd-port      | Fluent host port                                                                  | 24224    |
+| --fluentd-tag       | Set a custom Fluentd tag                                                          | 'test'   |
+| --fluentd-label     | Set a custom Fluentd label                                                        | 'pytest' |
+| --fluentd-timestamp | Specify a Fluentd timestamp                                                       | None     |
+| --extend-logging    | Extend the Python logging with a Fluent handler                                   | False    |
+| --add-docstrings    | Add test docstrings to testcase call messages                                     |          |
 
-### Ini Configuration Support 
+### Ini Configuration Support
 
 Default values of the CLI arguments for a project could also be defined in one of the following ini configuration files:
 
-1. pytest.ini: Arguments are defined under pytest section in the file. This file takes precedence over all other configuration files even if empty. 
+1. pytest.ini: Arguments are defined under pytest section in the file. This file takes precedence over all other configuration files even if empty.
 
 ```python
 [pytest]
@@ -224,7 +225,7 @@ Timestamps are added to the information if the ``--fluentd-timestamp`` option is
 addopts= --session-uuid="ac2f7600-a079-46cf-a7e0-6408b166364c" --fluentd-port=24224  --fluentd-host=localhost --fluentd-tag='dummytest' --fluentd-label='pytest' --fluentd-timestamp='@timestamp' --extend-logging
 ```
 
-The timestamp is added to each message. The value is in ISO 8601 format. A sample 
+The timestamp is added to each message. The value is in ISO 8601 format. A sample
 of the data collection from `test_addoptions.py` (as above) would look as below:
 
 ```json
@@ -253,4 +254,3 @@ The changelog.
 ## Contributing
 
 We welcome any contributions, enhancements, and bug-fixes. Open an [issue](https://github.com/Rohde-Schwarz/pytest-fluent/issues) on [Github](https://github.com) and [submit a pull request](https://github.com/Rohde-Schwarz/pytest-fluent/pulls).
-
