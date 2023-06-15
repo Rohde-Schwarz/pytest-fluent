@@ -7,6 +7,7 @@ from fluent import handler
 import pytest_fluent.event
 
 plugin_name = "pytest_fluent"
+SESSION_UUID = uuid.uuid4()
 
 
 def isinstance_patch(
@@ -26,7 +27,7 @@ def logging_content():
 
 @pytest.fixture(scope="session")
 def session_uuid():
-    return uuid.uuid4()
+    return SESSION_UUID
 
 
 @pytest.fixture()

@@ -18,7 +18,7 @@ parser.add_argument(
 
 @pytest.fixture
 def default() -> dict:
-    return {"all": {"tag": "<args.tag>", "label": "<args.label>"}}
+    return {"all": {"tag": "<fluentd-tag>", "label": "<fluentd-label>"}}
 
 
 def test_json_file(default):

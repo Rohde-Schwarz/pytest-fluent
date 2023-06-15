@@ -6,6 +6,28 @@
             "$ref": "#/definitions/AdditionalProperties"
         }
     },
+    "anyOf": [
+        {
+            "type": "object",
+            "patternProperties": {
+                "all": {
+                    "$ref": "#/definitions/AdditionalProperties",
+                    "required": [
+                        "tag",
+                        "label"
+                    ]
+                }
+            }
+        },
+        {
+            "type": "object",
+            "patternProperties": {
+                "pytest_runtest_logstart|pytest_runtest_logreport|pytest_runtest_logfinish|logging": {
+                    "$ref": "#/definitions/AdditionalProperties"
+                }
+            }
+        }
+    ],
     "additionalProperties": false,
     "definitions": {
         "RegexString": {
@@ -25,10 +47,20 @@
                     "default": "<fluentd-label>"
                 },
                 "replace": {
-                    "type": "object",
-                    "patternProperties": {
-                        "status|stage|sessionId|testId|name|when|duration": {
-                            "$ref": "#/definitions/RegexString"
+                    "keys": {
+                        "type": "object",
+                        "patternProperties": {
+                            "status|stage|sessionId|testId|name|when|duration": {
+                                "$ref": "#/definitions/RegexString"
+                            }
+                        }
+                    },
+                    "values": {
+                        "type": "object",
+                        "patternProperties": {
+                            "passed|failed|skipped|error|start|finish|session|testcase": {
+                                "type": "string"
+                            }
                         }
                     }
                 },
@@ -44,8 +76,10 @@
                         "$ref": "#/definitions/RegexString"
                     }
                 }
-            },
-            "required": []
+            }
         }
-    }
+    },
+    "required": [
+        "all"
+    ]
 }

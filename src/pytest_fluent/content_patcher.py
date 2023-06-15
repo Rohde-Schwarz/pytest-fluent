@@ -40,23 +40,36 @@ class ContentPatcher:
         patched = {}
         all_settings = {}
         for key, value in user_settings.get("all", {}).items():
-            if isinstance(value, dict):
-                for subkey, subvalue in value.items():
-                    value[subkey] = self._get_env_or_args(subvalue)
-            else:
-                value = self._get_env_or_args(value)
+            value = self._patch_value(key, value)
             all_settings.update({key: value})
         for stage_name in stage_names:
             patched.update({stage_name: all_settings.copy()})
             stage_info = user_settings.get(stage_name, {})
             for key, value in stage_info.items():
+                value = self._patch_value(key, value)
                 if isinstance(value, dict):
-                    for subkey, subvalue in value.items():
-                        value[subkey] = self._get_env_or_args(subvalue)
-                else:
-                    value = self._get_env_or_args(value)
+                    value = self._merge_patched_values(
+                        patched[stage_name].get(key, {}), value
+                    )
                 patched[stage_name].update({key: value})
         return patched
+
+    def _patch_value(self, key: str, value: typing.Any) -> typing.Any:
+        if key == "replace":
+            value = {key: self._patch_value(key, v) for key, v in value.items()}
+        else:
+            if isinstance(value, dict):
+                for subkey, subvalue in value.items():
+                    value[subkey] = self._get_env_or_args(subvalue)
+            else:
+                value = self._get_env_or_args(value)
+        return value
+
+    def _merge_patched_values(self, old: dict, new: dict) -> dict:
+        merged = old.copy()
+        for key, value in new.items():
+            merged[key] = value
+        return merged
 
     @property
     def user_settings(self) -> dict:
@@ -117,11 +130,20 @@ class ContentPatcher:
         if "label" in user_settings:
             stage_content_patched["label"] = user_settings["label"]
         if "replace" in user_settings:
-            for key, value in user_settings.get("replace", {}).items():
-                if key in stage_content_patched:
-                    tmp = stage_content_patched[key]
-                    stage_content_patched[value] = tmp
-                    del stage_content_patched[key]
+            replace_it = user_settings["replace"]
+            if "keys" in replace_it:
+                keys_settings = replace_it["keys"]
+                for key, value in keys_settings.items():
+                    if key in stage_content_patched:
+                        tmp = stage_content_patched[key]
+                        stage_content_patched[value] = tmp
+                        del stage_content_patched[key]
+            if "values" in replace_it:
+                value_settings = replace_it["values"]
+                new_value_keys = value_settings.keys()
+                for key, value in stage_content_patched.items():
+                    if not isinstance(value, dict) and value in new_value_keys:
+                        stage_content_patched[key] = value_settings[value]
         to_add = user_settings.get("add", {})
         stage_content_patched.update(to_add)
         to_drop = user_settings.get("drop", [])

@@ -27,7 +27,7 @@ def user_settings() -> dict:
         "all": {
             "tag": "run",
             "label": "pytest",
-            "replace": {"status": "state", "sessionId": "id"},
+            "replace": {"keys": {"status": "state", "sessionId": "id"}},
         },
         "pytest_sessionstart": {
             "tag": "run",
@@ -47,10 +47,13 @@ def user_settings() -> dict:
         "pytest_runtest_logreport": {
             "tag": "result",
             "label": "testcase",
+            "replace": {
+                "values": {"passed": "pass", "failed": "fail"},
+            },
             "add": {"stop_info": "Testcase finished"},
         },
         "logging": {
-            "replace": {"message": "msg", "sessionId": "id"},
+            "replace": {"keys": {"message": "msg", "sessionId": "id"}},
         },
     }
 
@@ -61,56 +64,59 @@ def user_settings_patched() -> dict:
         "pytest_runtest_call": {
             "tag": "run",
             "label": "pytest",
-            "replace": {"status": "state", "sessionId": "id"},
+            "replace": {"keys": {"status": "state", "sessionId": "id"}},
         },
         "pytest_runtest_logfinish": {
             "tag": "run",
             "label": "pytest",
-            "replace": {"status": "state", "sessionId": "id"},
+            "replace": {"keys": {"status": "state", "sessionId": "id"}},
         },
         "pytest_runtest_logreport": {
             "tag": "result",
             "label": "testcase",
-            "replace": {"status": "state", "sessionId": "id"},
+            "replace": {
+                "keys": {"status": "state", "sessionId": "id"},
+                "values": {"passed": "pass", "failed": "fail"},
+            },
             "add": {"stop_info": "Testcase finished"},
         },
         "pytest_runtest_logstart": {
             "tag": "run",
             "label": "testcase",
-            "replace": {"status": "state", "sessionId": "id"},
+            "replace": {"keys": {"status": "state", "sessionId": "id"}},
             "add": {"start_info": "Testcase started"},
         },
         "pytest_runtest_makereport": {
             "tag": "run",
             "label": "pytest",
-            "replace": {"status": "state", "sessionId": "id"},
+            "replace": {"keys": {"status": "state", "sessionId": "id"}},
         },
         "pytest_runtest_setup": {
             "tag": "run",
             "label": "pytest",
-            "replace": {"status": "state", "sessionId": "id"},
+            "replace": {"keys": {"status": "state", "sessionId": "id"}},
         },
         "pytest_runtest_teardown": {
             "tag": "run",
             "label": "pytest",
-            "replace": {"status": "state", "sessionId": "id"},
+            "replace": {"keys": {"status": "state", "sessionId": "id"}},
         },
         "pytest_sessionfinish": {
             "tag": "result",
             "label": "test",
-            "replace": {"status": "state", "sessionId": "id"},
+            "replace": {"keys": {"status": "state", "sessionId": "id"}},
             "add": {"stop_info": "Pytest finished"},
         },
         "pytest_sessionstart": {
             "tag": "run",
             "label": "test",
-            "replace": {"status": "state", "sessionId": "id"},
+            "replace": {"keys": {"status": "state", "sessionId": "id"}},
             "add": {"start_info": "Pytest started"},
         },
         "logging": {
             "tag": "run",
             "label": "pytest",
-            "replace": {"message": "msg", "sessionId": "id"},
+            "replace": {"keys": {"message": "msg", "sessionId": "id"}},
         },
     }
 
