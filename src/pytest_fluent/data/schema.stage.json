@@ -18,11 +18,11 @@
             "properties": {
                 "tag": {
                     "$ref": "#/definitions/RegexString",
-                    "default": "<args.tag>"
+                    "default": "<fluentd-tag>"
                 },
                 "label": {
                     "$ref": "#/definitions/RegexString",
-                    "default": "<args.label>"
+                    "default": "<fluentd-label>"
                 },
                 "replace": {
                     "type": "object",

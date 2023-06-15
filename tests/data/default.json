@@ -1,6 +1,6 @@
 {
     "all": {
-        "tag": "<args.tag>",
-        "label": "<args.label>"
+        "tag": "<fluentd-tag>",
+        "label": "<fluentd-label>"
     }
 }
