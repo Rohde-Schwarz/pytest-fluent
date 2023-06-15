@@ -63,7 +63,7 @@ will result in the following output
   },
   {
     "type": "logging",
-    "host": "MU763729",
+    "host": "hostname",
     "where": "test_data_reporter_with_patched_values.test_base",
     "level": "INFO",
     "stack_trace": "None",
