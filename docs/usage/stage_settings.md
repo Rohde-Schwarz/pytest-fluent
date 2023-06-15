@@ -119,3 +119,86 @@ def test_base():
     logger.info("Test running")
     assert True
 ```
+
+#### Stage setting file
+
+Custom settings for each supported stage can be easily setup. You have to create a file with
+a `.json` or `.yaml` extension and call pytest with this additional parameter `--stage-settings`.
+
+The file will be validated against a schema of supported values and in case of an error, a `jsonschema.ValidationError`
+will be thrown.
+
+#### Stage settings
+
+##### Number of supported stage
+
+The following stages can be modified.
+
+* `pytest_sessionstart`
+* `pytest_runtest_logstart`
+* `pytest_runtest_logreport`
+* `pytest_runtest_logfinish`
+* `pytest_sessionfinish`
+* `logging`
+
+These values are the keys for the dictionary object. Additionally, you can set also
+a `all` key for convenience reasons to patch all keys at once.
+
+#### Patch events
+
+Probably, your stage setting would look like
+
+```json
+{
+    "pytest_sessionstart": {
+        "tag": "run",
+        "label": "pytest",
+        "replace": {
+            "keys": {
+                "status": "state", "sessionId": "id"
+            },
+            "values": {
+                "passed": "pass"
+            }
+        },
+        "add": {"start_info": "Pytest started"},
+    }
+}
+```
+
+The following values are supported
+
+| Key name  | action                                                                                 | type   |
+| --------- | -------------------------------------------------------------------------------------- | ------ |
+| `tag`     | Set a specifc Fluent tag for this stage                                                | `str`  |
+| `label`   | Set a specifc Fluent label for this stage                                              | `str`  |
+| `replace` | Replace key values from a dictionary and also replace some preset pytest result values | `dict` |
+| `add`     | Add new values to the result dictionary                                                | `dict` |
+| `drop`    | Drop specific values from the result dictionary                                        | `dict` |
+
+##### replace dictionary
+
+The `replace` patching action has two keys `keys` and `values` in order to replace either a key value or a result value.
+See the following default values in order to get an idea about the content.
+
+At the moment, the following values can be changed
+
+* `passed`
+* `failed`
+* `skipped`
+* `error`
+* `start`
+* `finish`
+* `session`
+* `testcase`
+
+#### Default values
+
+| stage                      | value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pytest_sessionstart`      | <pre lang="json">{<br>    "status": "start",<br>    "stage": "session",<br>    "sessionId": "8d0d165d-5581-478c-ba0f-f7ec7d5bcbcf",<br>    "tag": "test",<br>    "label": "pytest"<br>}</pre>                                                                                                                                                                                                                                                                                                                                                                           |
+| `pytest_runtest_logstart`  | <pre lang="json">{<br>    "status": "start",<br>    "stage": "testcase",<br>    "sessionId": "8d0d165d-5581-478c-ba0f-f7ec7d5bcbcf",<br>    "testId": "9f0363fa-ef99-49c7-8a2d-6261e90acb00",<br>    "name": "test_data_reporter_with_patched_values.py::test_base",<br>    "tag": "test",<br>    "label": "pytest"<br>}</pre>                                                                                                                                                                                                                                          |
+| `pytest_runtest_logreport` | <pre lang="json">{<br>    "name": "test_data_reporter_with_patched_values.py::test_base",<br>    "outcome": "passed",<br>    "duration": 0.0035069000000005346,<br>    "markers": {<br>      "test_base": 1,<br>      "test_data_reporter_with_patched_values.py": 1,<br>      "test_data_reporter_with_patched_values0": 1<br>    },<br>    "stage": "testcase",<br>    "when": "call",<br>    "sessionId": "8d0d165d-5581-478c-ba0f-f7ec7d5bcbcf",<br>    "testId": "9f0363fa-ef99-49c7-8a2d-6261e90acb00",<br>    "tag": "test",<br>    "label": "pytest"<br>}</pre> |
+| `pytest_runtest_logfinish` | <pre lang="json">{<br>    "status": "finish",<br>    "stage": "testcase",<br>    "sessionId": "8d0d165d-5581-478c-ba0f-f7ec7d5bcbcf",<br>    "testId": "9f0363fa-ef99-49c7-8a2d-6261e90acb00",<br>    "name": "test_data_reporter_with_patched_values.py::test_base",<br>    "tag": "test",<br>    "label": "pytest"<br>}</pre>                                                                                                                                                                                                                                         |
+| `pytest_sessionfinish`     | <pre lang="json">{<br>    "status": "finish",<br>    "duration": 1.5651893615722656,<br>    "stage": "session",<br>    "sessionId": "8d0d165d-5581-478c-ba0f-f7ec7d5bcbcf",<br>    "tag": "test",<br>    "label": "pytest"<br>}</pre>                                                                                                                                                                                                                                                                                                                                   |
+| `logging`                  | <pre lang="json">{<br>    "type": "logging",<br>    "host": "hostname",<br>    "where": "test_data_reporter_with_patched_values.test_base",<br>    "level": "INFO",<br>    "stack_trace": "None",<br>    "message": "Test running",<br>    "sessionId": "8d0d165d-5581-478c-ba0f-f7ec7d5bcbcf",<br>    "testId": "9f0363fa-ef99-49c7-8a2d-6261e90acb00",<br>    "stage": "testcase"<br>}</pre>                                                                                                                                                                          |
