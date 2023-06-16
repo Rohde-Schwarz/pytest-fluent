@@ -1,9 +1,9 @@
 ### Custom stage settings
 
-Sometimes, the default settings are not enough in order to forward the test information as needed. Thus, you can set custom stage settings
+Sometimes, the default settings are not enough in order to forward the test information as needed. Therefore, you can set custom stage settings
 in order to fit your needs.
 
-You can set specific values for `all` stages or specific values for any used stage. In order to do so, call your test run with the `--stage-settings=YourFileName.json` parameter. The following example stage settings JSON file content
+You can set specific values for `all` stages or specific values for any used stage. In order to do so, call your test run with the `--stage-settings=YourFileName.json` parameter. The following example stage settings JSON file content:
 
 ```json
 {
@@ -41,7 +41,7 @@ You can set specific values for `all` stages or specific values for any used sta
 }
 ```
 
-will result in the following output
+will result in the following output:
 
 ```json
 [
@@ -109,7 +109,7 @@ will result in the following output
 ]
 ```
 
-for this test case
+for this test case:
 
 ```python
 import logging
