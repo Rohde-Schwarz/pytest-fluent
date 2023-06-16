@@ -155,13 +155,16 @@ Probably, your stage setting would look like
         "label": "pytest",
         "replace": {
             "keys": {
-                "status": "state", "sessionId": "id"
+                "status": "state",
+                "sessionId": "id"
             },
             "values": {
                 "passed": "pass"
             }
         },
-        "add": {"start_info": "Pytest started"},
+        "add": {
+          "start_info": "Pytest started"
+        },
     }
 }
 ```
@@ -176,7 +179,7 @@ The following values are supported
 | `add`     | Add new values to the result dictionary                                                | `dict` |
 | `drop`    | Drop specific values from the result dictionary                                        | `dict` |
 
-##### replace dictionary
+##### Replace dictionary
 
 The `replace` patching action has two keys `keys` and `values` in order to replace either a key value or a result value.
 See the following default values in order to get an idea about the content.
@@ -191,6 +194,38 @@ At the moment, the following values can be changed
 * `finish`
 * `session`
 * `testcase`
+
+##### Use values from ARGV and ENV
+
+If you want to use data provided by the command line arguments or directly from environment variables,
+use the following syntax for value strings.
+
+| Type | Syntax                         |
+| ---- | ------------------------------ |
+| ARGV | `"<fluentd-tag>"`              |
+| ENV  | `"${USE_ENV}"` or `"$USE_ENV"` |
+
+Here is a simple example using both variants
+
+```json
+{
+    "pytest_sessionstart": {
+        "tag": "run",
+        "label": "pytest",
+        "replace": {
+            "keys": {
+                "tag": "<fluentd-tag>",
+                "sessionId": "${ID}"
+            },
+            "values": {
+                "passed": "$OUTCOME_PASSED"
+            }
+        }
+    }
+}
+```
+
+The data will be mapped after starting the pytest session.
 
 #### Default values
 
