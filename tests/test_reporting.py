@@ -1,5 +1,5 @@
 def test_data_reporter_base_with_passed(run_mocked_pytest, session_uuid):
-    runpytest, sender = run_mocked_pytest
+    runpytest, fluent_sender = run_mocked_pytest
     result = runpytest(
         f"--session-uuid={session_uuid}",
         pyfile="""
@@ -7,7 +7,6 @@ def test_data_reporter_base_with_passed(run_mocked_pytest, session_uuid):
         assert True
     """,
     )
-    fluent_sender = sender.return_value
     call_args = fluent_sender.emit_with_time.call_args_list
     result.assert_outcomes(passed=1)
     assert len(call_args) > 0
@@ -24,7 +23,7 @@ def test_data_reporter_base_with_passed(run_mocked_pytest, session_uuid):
 
 
 def test_data_reporter_xdist_passed(run_mocked_pytest, session_uuid):
-    runpytest, sender = run_mocked_pytest
+    runpytest, fluent_sender = run_mocked_pytest
     result = runpytest(
         "-n 2",
         f"--session-uuid={session_uuid}",
@@ -48,7 +47,6 @@ def test_data_reporter_xdist_passed(run_mocked_pytest, session_uuid):
         assert True
     """,
     )
-    fluent_sender = sender.return_value
     call_args = fluent_sender.emit_with_time.call_args_list
     result.assert_outcomes(passed=6)
     assert len(call_args) > 0
@@ -76,7 +74,7 @@ def check_for_verdict(session_uuid, report: dict):
 
 
 def test_data_reporter_base_with_xfail(run_mocked_pytest, session_uuid):
-    runpytest, sender = run_mocked_pytest
+    runpytest, fluent_sender = run_mocked_pytest
     _ = runpytest(
         f"--session-uuid={session_uuid}",
         pyfile="""
@@ -87,7 +85,6 @@ def test_data_reporter_base_with_xfail(run_mocked_pytest, session_uuid):
         assert False
     """,
     )
-    fluent_sender = sender.return_value
     call_args = fluent_sender.emit_with_time.call_args_list
     assert len(call_args) > 0
     args = call_args[2].args[2]
@@ -97,7 +94,7 @@ def test_data_reporter_base_with_xfail(run_mocked_pytest, session_uuid):
 
 
 def test_data_reporter_base_with_exception(run_mocked_pytest, session_uuid):
-    runpytest, sender = run_mocked_pytest
+    runpytest, fluent_sender = run_mocked_pytest
     _ = runpytest(
         f"--session-uuid={session_uuid}",
         pyfile="""
@@ -106,7 +103,6 @@ def test_data_reporter_base_with_exception(run_mocked_pytest, session_uuid):
         assert True
     """,
     )
-    fluent_sender = sender.return_value
     call_args = fluent_sender.emit_with_time.call_args_list
     assert len(call_args) > 0
     args = call_args[2].args[2]
@@ -116,7 +112,7 @@ def test_data_reporter_base_with_exception(run_mocked_pytest, session_uuid):
 
 
 def test_data_reporter_base_with_setup_exception(run_mocked_pytest, session_uuid):
-    runpytest, sender = run_mocked_pytest
+    runpytest, fluent_sender = run_mocked_pytest
     _ = runpytest(
         f"--session-uuid={session_uuid}",
         pyfile="""
@@ -133,7 +129,6 @@ def test_data_reporter_base_with_setup_exception(run_mocked_pytest, session_uuid
         assert True
     """,
     )
-    fluent_sender = sender.return_value
     call_args = fluent_sender.emit_with_time.call_args_list
     assert len(call_args) > 0
     args = call_args[2].args[2]

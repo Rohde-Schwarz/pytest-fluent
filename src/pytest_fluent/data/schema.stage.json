@@ -1,0 +1,85 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "patternProperties": {
+        "all|pytest_runtest_logstart|pytest_runtest_logreport|pytest_runtest_logfinish|logging": {
+            "$ref": "#/definitions/AdditionalProperties"
+        }
+    },
+    "anyOf": [
+        {
+            "type": "object",
+            "patternProperties": {
+                "all": {
+                    "$ref": "#/definitions/AdditionalProperties",
+                    "required": [
+                        "tag",
+                        "label"
+                    ]
+                }
+            }
+        },
+        {
+            "type": "object",
+            "patternProperties": {
+                "pytest_runtest_logstart|pytest_runtest_logreport|pytest_runtest_logfinish|logging": {
+                    "$ref": "#/definitions/AdditionalProperties"
+                }
+            }
+        }
+    ],
+    "additionalProperties": false,
+    "definitions": {
+        "RegexString": {
+            "type": "string",
+            "regex": "(\\$)?([<\\{])?[\\w_.-]+([>\\}])?"
+        },
+        "AdditionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "tag": {
+                    "$ref": "#/definitions/RegexString",
+                    "default": "<fluentd-tag>"
+                },
+                "label": {
+                    "$ref": "#/definitions/RegexString",
+                    "default": "<fluentd-label>"
+                },
+                "replace": {
+                    "keys": {
+                        "type": "object",
+                        "patternProperties": {
+                            "status|stage|sessionId|testId|name|when|duration": {
+                                "$ref": "#/definitions/RegexString"
+                            }
+                        }
+                    },
+                    "values": {
+                        "type": "object",
+                        "patternProperties": {
+                            "passed|failed|skipped|error|start|finish|session|testcase": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "add": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/RegexString"
+                    }
+                },
+                "drop": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/RegexString"
+                    }
+                }
+            }
+        }
+    },
+    "required": [
+        "all"
+    ]
+}

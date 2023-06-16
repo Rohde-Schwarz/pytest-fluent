@@ -15,9 +15,8 @@ def test_info() -> dict:
 
 
 def test_additional_information(run_mocked_pytest, session_uuid):
-    runpytest, sender = run_mocked_pytest
+    runpytest, fluent_sender = run_mocked_pytest
     runpytest(f"--session-uuid={session_uuid}")
-    fluent_sender = sender.return_value
     call_args = fluent_sender.emit_with_time.call_args_list
     for idx, call_arg in enumerate(call_args):
         data = call_arg.args[2]

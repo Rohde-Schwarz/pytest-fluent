@@ -1,5 +1,5 @@
 def test_get_logger(run_mocked_pytest, session_uuid, logging_content):
-    runpytest, sender = run_mocked_pytest
+    runpytest, fluent_sender = run_mocked_pytest
     result = runpytest(
         f"--session-uuid={session_uuid}",
         "--extend-logging",
@@ -10,7 +10,6 @@ def test_get_logger(run_mocked_pytest, session_uuid, logging_content):
         assert True
     """,
     )
-    fluent_sender = sender.return_value
     call_args = fluent_sender.emit_with_time.call_args_list
     result.assert_outcomes(passed=1)
     assert len(call_args) > 0

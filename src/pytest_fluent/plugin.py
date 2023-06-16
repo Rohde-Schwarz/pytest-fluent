@@ -1,6 +1,7 @@
 """pytest-fluent-logging plugin definition."""
 import datetime
 import logging
+import os
 import textwrap
 import time
 import typing
@@ -9,12 +10,17 @@ from io import BytesIO
 
 import msgpack
 import pytest
-from fluent import event, sender
 from fluent.handler import FluentHandler, FluentRecordFormatter
 
 from .additional_information import (
     get_additional_session_information,
     get_additional_test_information,
+)
+from .content_patcher import ContentPatcher
+from .event import Event
+from .setting_file_loader_action import (
+    SettingFileLoaderAction,
+    load_and_check_settings_file,
 )
 from .test_report import LogReport
 
@@ -40,24 +46,44 @@ class FluentLoggerRuntime(object):
         self._timestamp = config.getoption("--fluentd-timestamp")
         self._extend_logging = config.getoption("--extend-logging")
         self._add_docstrings = config.getoption("--add-docstrings")
+        stage_names = [method for method in dir(self) if method.startswith("pytest_")]
+        stage_names.append("logging")
+        self._content_patcher = ContentPatcher(
+            user_settings=config.getoption("--stage-settings"),
+            args_settings=config.option,
+            stage_names=stage_names,
+        )
+        tags: typing.List[str] = []
+        for value in self._content_patcher.user_settings.values():
+            tag = value.get("tag")
+            if not tag:
+                continue
+            tags.append(tag)
+        tags = list(set(tags))
+        self._event = Event(
+            tags, self._host, self._port, buffer_overflow_handler=overflow_handler
+        )
         self._log_reporter = LogReport(self.config)
-        self._setup_fluent_sender()
         self._patch_logging()
 
-    def _setup_fluent_sender(self):
-        if self._host is None:
-            sender.setup(self._tag, buffer_overflow_handler=overflow_handler)
-        else:
-            sender.setup(
-                self._tag,
-                host=self._host,
-                port=self._port,
-                buffer_overflow_handler=overflow_handler,
-            )
-
     def _patch_logging(self):
-        if self._extend_logging:
-            extend_loggers(self._host, self._port, self._tag)
+        if not self._extend_logging:
+            return
+        tag = self._content_patcher.user_settings.get("logging", {}).get("tag")
+        if not tag:
+            raise ValueError(
+                "Tag for logging was not set. Please set either specific tag value for \
+                    key 'logging' or use the 'all' object in stage settings file."
+            )
+        label = self._content_patcher.user_settings.get("logging", {}).get("label")
+        if label:
+            tag = f"{tag}.{label}"
+        extend_loggers(
+            self._host,
+            self._port,
+            tag,
+            self._content_patcher,
+        )
 
     def _set_session_uid(
         self, id: typing.Optional[typing.Union[str, uuid.UUID]] = None
@@ -72,11 +98,9 @@ class FluentLoggerRuntime(object):
         else:
             raise ValueError("Unique identifier is not in a valid format.")
 
-    def set_timestamp_information(self, event_data: dict):
+    def _set_timestamp_information(self, data: dict):
         if self._timestamp is not None:
-            event_data.update(
-                {self._timestamp: f"{datetime.datetime.utcnow().isoformat()}"}
-            )
+            data.update({self._timestamp: f"{datetime.datetime.utcnow().isoformat()}"})
 
     @property
     def session_uid(
@@ -104,9 +128,11 @@ class FluentLoggerRuntime(object):
                 "stage": "session",
                 "sessionId": self.session_uid,
             }
+            data = self._content_patcher.patch(data)
             data.update(get_additional_session_information())
-            self.set_timestamp_information(event_data=data)
-            event.Event(self._label, data)
+            self._set_timestamp_information(data=data)
+            tag, label = self._content_patcher.get_tag_and_label()
+            self._event(tag, label, data)
 
     def pytest_runtest_logstart(self, nodeid: str, location: typing.Tuple[int, str]):
         """Custom hook for test start."""
@@ -120,12 +146,22 @@ class FluentLoggerRuntime(object):
                 "testId": self.test_uid,
                 "name": nodeid,
             }
+            data = self._content_patcher.patch(data)
             data.update(get_additional_test_information())
-            self.set_timestamp_information(event_data=data)
-            event.Event(self._label, data)
+            self._set_timestamp_information(data=data)
+            tag, label = self._content_patcher.get_tag_and_label()
+            self._event(tag, label, data)
 
     def pytest_runtest_setup(self, item: pytest.Item):
         """Custom hook for test setup."""
+        set_stage("testcase")
+        docstring = get_test_docstring(item)
+        item.stash[DOCSTRING_STASHKEY] = docstring
+        if not self.config.getoption("collectonly"):
+            pass
+
+    def pytest_runtest_teardown(self, item: pytest.Item, nextitem: pytest.Item):
+        """Custom hook for test teardown."""
         set_stage("testcase")
         docstring = get_test_docstring(item)
         item.stash[DOCSTRING_STASHKEY] = docstring
@@ -140,6 +176,7 @@ class FluentLoggerRuntime(object):
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_makereport(self, item: pytest.Item, call):
+        """Custom hook for make report."""
         report = (yield).get_result()
         docstring = item.stash.get(DOCSTRING_STASHKEY, None)
         report.stash = {DOCSTRING_KEY: docstring}
@@ -148,10 +185,10 @@ class FluentLoggerRuntime(object):
         """Custom hook for logging results."""
         set_stage("testcase")
         if not self.config.getoption("collectonly"):
-            result_data = self._log_reporter(report)
-            if not result_data:
+            data = self._log_reporter(report)
+            if not data:
                 return
-            result_data.update(
+            data.update(
                 {
                     "stage": "testcase",
                     "when": report.when,
@@ -162,9 +199,11 @@ class FluentLoggerRuntime(object):
             if self._add_docstrings:
                 docstring = report.stash.get(DOCSTRING_KEY, None)
                 if docstring:
-                    result_data.update({"docstring": docstring})
-            self.set_timestamp_information(event_data=result_data)
-            event.Event(self._label, result_data)
+                    data.update({"docstring": docstring})
+            self._set_timestamp_information(data=data)
+            data = self._content_patcher.patch(data)
+            tag, label = self._content_patcher.get_tag_and_label()
+            self._event(tag, label, data)
 
     def pytest_runtest_logfinish(
         self,
@@ -174,18 +213,17 @@ class FluentLoggerRuntime(object):
         """Custom hook for test end."""
         set_stage("testcase")
         if not self.config.getoption("collectonly"):
-            event_data = {
+            data = {
                 "status": "finish",
                 "stage": "testcase",
                 "sessionId": self.session_uid,
                 "testId": self.test_uid,
                 "name": nodeid,
             }
-            self.set_timestamp_information(event_data=event_data)
-            event.Event(
-                self._label,
-                event_data,
-            )
+            self._set_timestamp_information(data=data)
+            data = self._content_patcher.patch(data)
+            tag, label = self._content_patcher.get_tag_and_label()
+            self._event(tag, label, data)
 
     def pytest_sessionfinish(
         self,
@@ -195,21 +233,27 @@ class FluentLoggerRuntime(object):
         """Custom hook for session end."""
         set_stage("session")
         if not self.config.getoption("collectonly"):
-            event_data = {
+            data = {
                 "status": "finish",
-                "duration": time.time() - self._session_start_time,
+                "duration": (
+                    time.time()
+                    - (
+                        0
+                        if self._session_start_time is None
+                        else self._session_start_time
+                    )
+                ),
                 "stage": "session",
                 "sessionId": self.session_uid,
             }
-            self.set_timestamp_information(event_data=event_data)
-            event.Event(
-                self._label,
-                event_data,
-            )
+            self._set_timestamp_information(data=data)
+            data = self._content_patcher.patch(data)
+            tag, label = self._content_patcher.get_tag_and_label()
+            self._event(tag, label, data)
 
 
-stage: str = "session"
-fluent_runtime: typing.Optional[FluentLoggerRuntime] = None
+STAGE: str = "session"
+FLUENT_RUNTIME: typing.Optional[FluentLoggerRuntime] = None
 
 #####################################################
 # Setup
@@ -226,7 +270,8 @@ def pytest_addoption(parser):
     )
     group.addoption(
         "--fluentd-host",
-        default=None,
+        default="localhost",
+        type=str,
         help="Fluentd remote host. Defaults to a local Fluentd session",
     )
     group.addoption(
@@ -260,24 +305,33 @@ def pytest_addoption(parser):
         action="store_true",
         help="Add test docstrings to the testcase call messages.",
     )
+    group.addoption(
+        "--stage-settings",
+        type=str,
+        default=load_and_check_settings_file(
+            os.path.join(os.path.dirname(__file__), "data", "default.stage.json")
+        ),
+        action=SettingFileLoaderAction,
+        help="Stage setting description JSON or YAML file path or string object.",
+    )
 
 
 def pytest_configure(config):
     """Extend pytest configuration."""
-    global fluent_runtime
+    global FLUENT_RUNTIME
     config.fluent = FluentLoggerRuntime(config)
     config.pluginmanager.register(config.fluent, "fluent-reporter-runtime")
-    fluent_runtime = config.fluent
+    FLUENT_RUNTIME = config.fluent
 
 
 def pytest_unconfigure(config):
     """Unregister runtime from pytest."""
-    global fluent_runtime
+    global FLUENT_RUNTIME
     fluent = getattr(config, "fluent", None)
     if fluent:
         del config.fluent
         config.pluginmanager.unregister(fluent)
-        fluent_runtime = None
+        FLUENT_RUNTIME = None
 
 
 #####################################################
@@ -293,14 +347,14 @@ def get_logger(request):
     port = config.getoption("--fluentd-port")
     tag = config.getoption("--fluentd-tag")
 
-    def get_logger(name=None):
+    def get_logger_wrapper(name=None):
         logger = logging.getLogger(name)
         if name is None:
             return logger
         add_handler(host, port, tag, logger)
         return logger
 
-    return get_logger
+    return get_logger_wrapper
 
 
 @pytest.fixture
@@ -326,9 +380,10 @@ def test_uid() -> typing.Optional[str]:
 class RecordFormatter(FluentRecordFormatter):
     """Extension of FluentRecordFormatter in order to add unique ID's"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, patcher: typing.Optional[ContentPatcher], *args, **kwargs):
         """Specific initilization."""
         super(RecordFormatter, self).__init__(*args, **kwargs)
+        self.content_patcher = patcher
 
     def format(self, record):
         """Extend formatting for Fluentd handler."""
@@ -338,34 +393,41 @@ class RecordFormatter(FluentRecordFormatter):
         data["sessionId"] = get_session_uid()
         data["testId"] = get_test_uid()
         data["stage"] = get_stage()
+        if self.content_patcher:
+            data = self.content_patcher.patch(data, "logging", ["tag", "label"])
         return data
 
 
-def extend_loggers(host, port, tag) -> None:
+def extend_loggers(host, port, tag, patcher: ContentPatcher) -> None:
     """Extend Python logging with a Fluentd handler."""
-    modify_logger(host, port, tag, None)
-    modify_logger(host, port, tag, "fluent")
+    modify_logger(host, port, tag, None, patcher)
+    modify_logger(host, port, tag, "fluent", patcher)
 
 
-def modify_logger(host, port, tag, name=None) -> None:
+def modify_logger(
+    host, port, tag, name=None, patcher: typing.Optional[ContentPatcher] = None
+) -> None:
     """Extend Python logging with a Fluentd handler."""
     logger = logging.getLogger(name)
-    add_handler(host, port, tag, logger)
+    add_handler(host, port, tag, logger, patcher)
 
 
-def add_handler(host, port, tag, logger):
+def add_handler(
+    host, port, tag, logger, patcher: typing.Optional[ContentPatcher] = None
+):
     """Add handler to a specific logger."""
     handler = FluentHandler(
         tag, host=host, port=port, buffer_overflow_handler=overflow_handler
     )
     formatter = RecordFormatter(
+        patcher,
         {
             "type": "logging",
             "host": "%(hostname)s",
             "where": "%(module)s.%(funcName)s",
             "level": "%(levelname)s",
             "stack_trace": "%(exc_text)s",
-        }
+        },
     )
     handler.setFormatter(formatter)
     logger.addHandler(handler)
@@ -380,13 +442,13 @@ def overflow_handler(pendings):
 
 def set_stage(val: str) -> None:
     """Set the current execution stage."""
-    global stage
-    stage = val
+    global STAGE
+    STAGE = val
 
 
 def get_stage() -> str:
     """Get the current execution stage."""
-    return stage
+    return STAGE
 
 
 # Unique identifiers
@@ -399,16 +461,16 @@ def create_unique_identifier():
 
 def get_session_uid() -> typing.Optional[str]:
     """Get current session UID."""
-    if fluent_runtime is None:
+    if FLUENT_RUNTIME is None:
         return None
-    return typing.cast(FluentLoggerRuntime, fluent_runtime).session_uid
+    return typing.cast(FluentLoggerRuntime, FLUENT_RUNTIME).session_uid
 
 
 def get_test_uid() -> typing.Optional[str]:
     """Get current test UID."""
-    if fluent_runtime is None:
+    if FLUENT_RUNTIME is None:
         return None
-    return typing.cast(FluentLoggerRuntime, fluent_runtime).test_uid
+    return typing.cast(FluentLoggerRuntime, FLUENT_RUNTIME).test_uid
 
 
 # Docstrings

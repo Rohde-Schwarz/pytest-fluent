@@ -3,7 +3,8 @@ import socket
 
 import pytest
 
-# set log_level="DEBUG" and log_cli = true in pyproject.toml configuration when debug info is needed
+# set log_level="DEBUG" and log_cli = true in pyproject.toml configuration when
+# debug info is needed
 logger = logging.getLogger("debug-log")
 
 TAG = "unittest"
@@ -15,14 +16,18 @@ HOSTNAME = socket.gethostname()
 @pytest.fixture
 def tox_ini(pytester, session_uuid):
     return pytester.makeini(
-        f"[pytest]\naddopts = --session-uuid='{session_uuid}' --fluentd-port={PORT} --fluentd-host='{HOSTNAME}' --fluentd-tag='{TAG}' --fluentd-label='{LABEL}' --extend-logging"
+        f'[pytest]\naddopts = --session-uuid="{session_uuid}" --fluentd-port={PORT} '
+        f'--fluentd-host="{HOSTNAME}" --fluentd-tag="{TAG}" --fluentd-label="{LABEL}" '
+        f"--extend-logging"
     )
 
 
 @pytest.fixture
 def pyprojtoml_ini(pytester, session_uuid):
     return pytester.makepyprojecttoml(
-        f"[tool.pytest.ini_options]\naddopts = \"--session-uuid='{session_uuid}' --fluentd-port={PORT} --fluentd-host='{HOSTNAME}' --fluentd-tag='{TAG}' --extend-logging\""
+        f'[tool.pytest.ini_options]\naddopts = "--session-uuid={session_uuid} '
+        f"--fluentd-port={PORT} --fluentd-host={HOSTNAME} --fluentd-tag={TAG} "
+        f'--extend-logging"'
     )
 
 
@@ -30,7 +35,9 @@ def pyprojtoml_ini(pytester, session_uuid):
 def pytest_ini(pytester, session_uuid):
     return pytester.makefile(
         ".ini",
-        pytest=f"[pytest]\naddopts = --session-uuid='{session_uuid}' --fluentd-port={PORT} --fluentd-host='{HOSTNAME}' --fluentd-tag='{TAG}' --fluentd-label='{LABEL}' --extend-logging",
+        pytest=f'[pytest]\naddopts = --session-uuid="{session_uuid}" '
+        f'--fluentd-port={PORT} --fluentd-host="{HOSTNAME}" --fluentd-tag="{TAG}" '
+        f'--fluentd-label="{LABEL}" --extend-logging',
     )
 
 

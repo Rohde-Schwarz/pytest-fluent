@@ -1,0 +1,3 @@
+all:
+  tag: "<fluentd-tag>"
+  label: "<fluentd-label>"

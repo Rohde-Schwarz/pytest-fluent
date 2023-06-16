@@ -32,7 +32,9 @@ dependencies = [
     "pytest>=7.0.0",
     "msgpack",
     "six",
-    "fluent-logger"
+    "fluent-logger",
+    "jsonschema",
+    "ruamel.yaml",
 ]
 dynamic = ["version"]
 
