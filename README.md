@@ -58,7 +58,7 @@ def test_my_runtime_log():
 
 ### Fixtures
 
-In order to create your own logger, set up a fixture as follows:
+In order to create your own logger, request a fixture as follows:
 
 ```python
 def test_my_runtime_log(get_logger):
