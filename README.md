@@ -105,16 +105,17 @@ def provide_more_test_information() -> dict:
 
 The pytest CLI can be called with the following arguments in order to configure fluent-logging.
 
-| argument            | description                                                                       | default  |
-| ------------------- | --------------------------------------------------------------------------------- | -------- |
-| --session-uuid      | Use a custom externally created UUID, e.g. link a CI job with the pytest session. |          |
-| --fluentd-host      | Fluentd host address. If not provided, a local Fluentd instance will be called.   |          |
-| --fluentd-port      | Fluent host port                                                                  | 24224    |
-| --fluentd-tag       | Set a custom Fluentd tag                                                          | 'test'   |
-| --fluentd-label     | Set a custom Fluentd label                                                        | 'pytest' |
-| --fluentd-timestamp | Specify a Fluentd timestamp                                                       | None     |
-| --extend-logging    | Extend the Python logging with a Fluent handler                                   | False    |
-| --add-docstrings    | Add test docstrings to testcase call messages                                     |          |
+| argument            | description                                                                                                                          | default  |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| --session-uuid      | Use a custom externally created UUID, e.g. link a CI job with the pytest session.                                                    |          |
+| --fluentd-host      | Fluentd host address. If not provided, a local Fluentd instance will be called.                                                      |          |
+| --fluentd-port      | Fluent host port                                                                                                                     | 24224    |
+| --fluentd-tag       | Set a custom Fluentd tag                                                                                                             | 'test'   |
+| --fluentd-label     | Set a custom Fluentd label                                                                                                           | 'pytest' |
+| --fluentd-timestamp | Specify a Fluentd timestamp                                                                                                          | None     |
+| --extend-logging    | Extend the Python logging with a Fluent handler                                                                                      | False    |
+| --add-docstrings    | Add test docstrings to testcase call messages                                                                                        |          |
+| --stage-settings    | Use custom stage settings file. See [documentation](https://pytest-fluent.readthedocs.io/en/latest/usage.html#custom-stage-settings) |          |
 
 ### Ini Configuration Support
 
@@ -142,7 +143,6 @@ addopts= --fluentd-port=24224 --fluentd-host=localhost --fluentd-tag='test' --fl
 ```
 
 If the same option is specified in both CLI and ini file, then CLI option would have higher priority and override the ini file values.
-
 
 ### What data are sent?
 
