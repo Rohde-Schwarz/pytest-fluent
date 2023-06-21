@@ -171,13 +171,13 @@ Probably, your stage setting would look like
 
 The following values are supported
 
-| Key name  | action                                                                                 | type   |
-| --------- | -------------------------------------------------------------------------------------- | ------ |
-| `tag`     | Set a specifc Fluent tag for this stage                                                | `str`  |
-| `label`   | Set a specifc Fluent label for this stage                                              | `str`  |
-| `replace` | Replace key values from a dictionary and also replace some preset pytest result values | `dict` |
-| `add`     | Add new values to the result dictionary                                                | `dict` |
-| `drop`    | Drop specific values from the result dictionary                                        | `dict` |
+| Key name  | action                                                                                 | type             |
+| --------- | -------------------------------------------------------------------------------------- | ---------------- |
+| `tag`     | Set a specifc Fluent tag for this stage                                                | `str`            |
+| `label`   | Set a specifc Fluent label for this stage                                              | `str`            |
+| `replace` | Replace key values from a dictionary and also replace some preset pytest result values | `Dict[str, str]` |
+| `add`     | Add new values to the result dictionary                                                | `Dict[str, str]` |
+| `drop`    | Drop specific values from the result dictionary                                        | `List[str]`      |
 
 ##### Replace dictionary
 
