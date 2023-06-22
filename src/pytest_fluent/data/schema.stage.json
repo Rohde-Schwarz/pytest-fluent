@@ -2,7 +2,7 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "patternProperties": {
-        "all|pytest_runtest_logstart|pytest_runtest_logreport|pytest_runtest_logfinish|logging": {
+        "all|pytest_sessionfinish|pytest_sessionstart|pytest_runtest_logstart|pytest_runtest_logreport|pytest_runtest_logfinish|logging": {
             "$ref": "#/definitions/AdditionalProperties"
         }
     },
@@ -22,7 +22,7 @@
         {
             "type": "object",
             "patternProperties": {
-                "pytest_runtest_logstart|pytest_runtest_logreport|pytest_runtest_logfinish|logging": {
+                "pytest_sessionfinish|pytest_sessionstart|pytest_runtest_logstart|pytest_runtest_logreport|pytest_runtest_logfinish|logging": {
                     "$ref": "#/definitions/AdditionalProperties"
                 }
             }

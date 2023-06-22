@@ -49,3 +49,48 @@ def test_xml_error():
                 os.path.join(os.path.dirname(__file__), "data", "default.xml"),
             ]
         )
+
+
+def test_more_complex_json_file(default):
+    args = parser.parse_args(
+        [
+            "--stage-settings",
+            os.path.join(os.path.dirname(__file__), "data", "complex.json"),
+        ]
+    )
+    assert args.settings == {
+        "all": {"tag": "", "label": "", "drop": ["stage"]},
+        "pytest_sessionstart": {
+            "tag": "run",
+            "label": "test",
+            "replace": {"keys": {"sessionId": "id"}},
+            "drop": ["status"],
+            "add": {"root_id": "8dcf8f65-35a6-4b9e-af88-e3ec9743eab9"},
+        },
+        "pytest_sessionfinish": {
+            "tag": "result",
+            "label": "test",
+            "replace": {"keys": {"sessionId": "id"}},
+            "add": {"root_id": "8dcf8f65-35a6-4b9e-af88-e3ec9743eab9"},
+            "drop": ["status"],
+        },
+        "pytest_runtest_logstart": {
+            "tag": "run",
+            "label": "testcase",
+            "replace": {"keys": {"sessionId": "root_id", "testId": "id"}},
+            "drop": ["status"],
+        },
+        "pytest_runtest_logreport": {
+            "tag": "result",
+            "label": "testcase",
+            "replace": {
+                "keys": {"sessionId": "root_id", "testId": "id", "outcome": "result"}
+            },
+            "drop": ["status", "when", "markers"],
+        },
+        "logging": {
+            "tag": "run",
+            "label": "logging",
+            "replace": {"keys": {"message": "msg", "sessionId": "id"}},
+        },
+    }
