@@ -179,6 +179,24 @@ The following values are supported
 | `add`     | Add new values to the result dictionary                                                | `Dict[str, str]` |
 | `drop`    | Drop specific values from the result dictionary                                        | `List[str]`      |
 
+##### Suppressing stage forwarding
+
+If you want that forwarding of a specific stage is suppressed, just set an empty string as `tag`.
+
+For instance if you want just a single stage being forwarded, see the following example
+
+```json
+{
+    "all": {
+        "tag": ""
+    },
+    "pytest_runtest_logreport": {
+        "tag": "run",
+        "label": "pytest"
+    }
+}
+```
+
 ##### Replace dictionary
 
 The `replace` patching action has two keys `keys` and `values` in order to replace either a key value or a result value.
