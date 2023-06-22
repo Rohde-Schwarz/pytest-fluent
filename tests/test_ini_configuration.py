@@ -42,13 +42,14 @@ def pytest_ini(pytester, session_uuid):
 
 
 @pytest.mark.parametrize("ini_path", ["tox_ini", "pyprojtoml_ini", "pytest_ini"])
-def test_ini_setting(pytester, session_uuid, ini_path, request):
+def test_ini_setting(pytester, run_mocked_pytest, session_uuid, ini_path, request):
+    runpytest, _ = run_mocked_pytest
     ini_file = request.getfixturevalue(ini_path)
     logger.debug("Generated ini file: %s", ini_file)
 
     filename = make_py_file(pytester, session_uuid, TAG, LABEL, PORT, HOSTNAME, True)
     logger.debug("Generated python module: %s", filename)
-    result = pytester.runpytest("-v")
+    result = runpytest("-v")
     result.stdout.fnmatch_lines(
         [
             "*passed*",
@@ -58,7 +59,8 @@ def test_ini_setting(pytester, session_uuid, ini_path, request):
 
 
 @pytest.mark.parametrize("ini_path", ["tox_ini", "pyprojtoml_ini", "pytest_ini"])
-def test_cli_args_precedence(pytester, ini_path, request):
+def test_cli_args_precedence(pytester, run_mocked_pytest, ini_path, request):
+    runpytest, _ = run_mocked_pytest
     fluent_tag = "dummytest"
     fluent_label = "pytester"
     fluent_port = 65535
@@ -67,10 +69,10 @@ def test_cli_args_precedence(pytester, ini_path, request):
     logger.debug("Generated ini file: %s", ini_file)
 
     filename = make_py_file(
-        pytester, tag=fluent_tag, label=fluent_label, port=fluent_port, logging=True
+        pytester, tag=fluent_tag, label=fluent_label, port=fluent_port, is_logging=True
     )
     logger.debug("Generated python module: %s", filename)
-    result = pytester.runpytest(
+    result = runpytest(
         f"--fluentd-tag={fluent_tag}",
         f"--fluentd-label={fluent_label}",
         f"--fluentd-port={fluent_port}",
@@ -83,10 +85,11 @@ def test_cli_args_precedence(pytester, ini_path, request):
     assert result.ret == 0
 
 
-def test_commandline_args(pytester):
-    filename = make_py_file(pytester, tag=TAG, logging=True)
+def test_commandline_args(pytester, run_mocked_pytest):
+    runpytest, _ = run_mocked_pytest
+    filename = make_py_file(pytester, tag=TAG, is_logging=True)
     logger.debug("Generated python module: %s", filename)
-    result = pytester.runpytest("--extend-logging", f"--fluentd-tag={TAG}")
+    result = runpytest("--extend-logging", f"--fluentd-tag={TAG}")
     result.stdout.fnmatch_lines(
         [
             "*passed*",
@@ -102,7 +105,7 @@ def make_py_file(
     label="pytest",
     port=24224,
     host="",
-    logging=False,
+    is_logging=False,
 ):
     session_id_str = (
         f'assert pytest_config.getoption("--session-uuid") == "{session_id}"'
@@ -116,7 +119,7 @@ def make_py_file(
 
     host_str = f'assert pytest_config.getoption("--fluentd-host") == "{host}"'
 
-    log_str = f'assert pytest_config.getoption("--extend-logging") == {logging}'
+    log_str = f'assert pytest_config.getoption("--extend-logging") == {is_logging}'
 
     return pytester.makepyfile(
         f"""
