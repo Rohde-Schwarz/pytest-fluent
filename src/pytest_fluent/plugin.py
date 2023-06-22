@@ -12,10 +12,7 @@ import msgpack
 import pytest
 from fluent.handler import FluentHandler, FluentRecordFormatter
 
-from .additional_information import (
-    get_additional_session_information,
-    get_additional_test_information,
-)
+from .additional_information import get_additional_information_callback
 from .content_patcher import ContentPatcher
 from .event import Event
 from .setting_file_loader_action import (
@@ -129,7 +126,7 @@ class FluentLoggerRuntime(object):
                 "sessionId": self.session_uid,
             }
             data = self._content_patcher.patch(data)
-            data.update(get_additional_session_information())
+            data.update(get_additional_information_callback())
             self._set_timestamp_information(data=data)
             tag, label = self._content_patcher.get_tag_and_label()
             self._event(tag, label, data)
@@ -147,7 +144,7 @@ class FluentLoggerRuntime(object):
                 "name": nodeid,
             }
             data = self._content_patcher.patch(data)
-            data.update(get_additional_test_information())
+            data.update(get_additional_information_callback())
             self._set_timestamp_information(data=data)
             tag, label = self._content_patcher.get_tag_and_label()
             self._event(tag, label, data)
@@ -202,6 +199,7 @@ class FluentLoggerRuntime(object):
                     data.update({"docstring": docstring})
             self._set_timestamp_information(data=data)
             data = self._content_patcher.patch(data)
+            data.update(get_additional_information_callback())
             tag, label = self._content_patcher.get_tag_and_label()
             self._event(tag, label, data)
 
@@ -222,6 +220,7 @@ class FluentLoggerRuntime(object):
             }
             self._set_timestamp_information(data=data)
             data = self._content_patcher.patch(data)
+            data.update(get_additional_information_callback())
             tag, label = self._content_patcher.get_tag_and_label()
             self._event(tag, label, data)
 
@@ -248,6 +247,7 @@ class FluentLoggerRuntime(object):
             }
             self._set_timestamp_information(data=data)
             data = self._content_patcher.patch(data)
+            data.update(get_additional_information_callback())
             tag, label = self._content_patcher.get_tag_and_label()
             self._event(tag, label, data)
 
