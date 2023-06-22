@@ -40,7 +40,7 @@ from logging import getLogger
 
 def test_my_runtime_log():
     value = 1
-    getLogger().info(f"Setting value to {value}")
+    getLogger().info("Setting value to %s", value)
     assert value == 1
 ```
 
@@ -51,7 +51,7 @@ from logging import getLogger
 
 def test_my_runtime_log():
     value = 1
-    getLogger('fluent').info(f"Setting value to {value}")
+    getLogger('fluent').info("Setting value to %s", value)
     assert value == 1
 ```
 
@@ -63,7 +63,7 @@ In order to create your own logger, request the following fixture
 def test_my_runtime_log(get_logger):
     logger = get_logger('my.Logger')
     value = 1
-    logger.info(f"Setting value to {value}")
+    logger.info("Setting value to %s", value)
     assert value == 1
 ```
 
@@ -72,8 +72,8 @@ If you want to get the current UIDs, use the following fixtures
 ```python
 def test_unique_identifier(session_uid, test_uid):
     logger = get_logger('fluent')
-    logger.info(f"Session ID: {session_uid}")
-    logger.info(f"Test ID: {test_uid}")
+    logger.info("Session ID: %s", session_uid)
+    logger.info("Test ID: %s", test_uid)
     value = 1
     assert value == 1
 ```
