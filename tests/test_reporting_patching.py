@@ -145,6 +145,7 @@ from .conftest import SESSION_UUID
                         "values": {"passed": "pass", "failed": "fail"},
                     },
                     "add": {"stop_info": "Testcase finished"},
+                    "drop": ["when"],
                 },
             },
             [
@@ -152,7 +153,6 @@ from .conftest import SESSION_UUID
                     "name": "test_data_reporter_with_patched_values.py::test_base",
                     "outcome": "pass",
                     "stage": "testcase",
-                    "when": "call",
                     "id": str(SESSION_UUID),
                     "tag": "test",
                     "stop_info": "Testcase finished",
