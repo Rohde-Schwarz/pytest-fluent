@@ -6,7 +6,7 @@ from .conftest import SESSION_UUID
 
 
 @pytest.mark.parametrize(
-    "patch_file_content,expected_result",
+    "patch_file_content,expected_result,extend_logging",
     [
         (
             {"all": {"tag": "<fluentd-tag>", "label": "<fluentd-label>"}},
@@ -59,6 +59,7 @@ from .conftest import SESSION_UUID
                     "label": "pytest",
                 },
             ],
+            True,
         ),
         (
             {
@@ -126,19 +127,61 @@ from .conftest import SESSION_UUID
                     "label": "pytest",
                 },
             ],
+            True,
+        ),
+        (
+            {
+                "all": {
+                    "tag": "",
+                    "label": "",
+                    "replace": {
+                        "keys": {"status": "state", "sessionId": "id"},
+                    },
+                },
+                "pytest_runtest_logreport": {
+                    "tag": "<fluentd-tag>",
+                    "label": "<fluentd-label>",
+                    "replace": {
+                        "values": {"passed": "pass", "failed": "fail"},
+                    },
+                    "add": {"stop_info": "Testcase finished"},
+                },
+            },
+            [
+                {
+                    "name": "test_data_reporter_with_patched_values.py::test_base",
+                    "outcome": "pass",
+                    "stage": "testcase",
+                    "when": "call",
+                    "id": str(SESSION_UUID),
+                    "tag": "test",
+                    "stop_info": "Testcase finished",
+                }
+            ],
+            False,
         ),
     ],
 )
 def test_data_reporter_with_patched_values(
-    pytester, run_mocked_pytest, session_uuid, patch_file_content, expected_result
+    pytester,
+    run_mocked_pytest,
+    session_uuid,
+    patch_file_content,
+    expected_result,
+    extend_logging,
 ):
     runpytest, fluent_sender = run_mocked_pytest
     pytester.makefile(".json", patch_file=json.dumps(patch_file_content))
     log_content = "Test running"
-    result = runpytest(
+    args = [
         f"--session-uuid={session_uuid}",
         "--stage-settings=patch_file.json",
-        "--extend-logging",
+    ]
+    if extend_logging:
+        args.append("--extend-logging")
+
+    result = runpytest(
+        *args,
         pyfile=f"""
     import logging
 
