@@ -61,6 +61,9 @@ class ContentPatcher:
             if isinstance(value, dict):
                 for subkey, subvalue in value.items():
                     value[subkey] = self._get_env_or_args(subvalue)
+            elif isinstance(value, list):
+                for idx, _ in enumerate(value):
+                    value[idx] = self._get_env_or_args(value[idx])
             else:
                 value = self._get_env_or_args(value)
         return value
@@ -148,7 +151,8 @@ class ContentPatcher:
         stage_content_patched.update(to_add)
         to_drop = user_settings.get("drop", [])
         for key in to_drop:
-            del user_settings[key]
+            if key in stage_content_patched:
+                del stage_content_patched[key]
         return stage_content_patched
 
     def _get_env_or_args(self, value: str) -> str:
@@ -162,9 +166,11 @@ class ContentPatcher:
 
     @staticmethod
     def _is_reference_string(value: str) -> typing.Optional[_ContentType]:
+        if not isinstance(value, str):
+            return None
         if re.match(r"(\$)?({)([\w_]+)(})", value):
             return _ContentType.ENV
-        elif re.match(r"(<)([\w-]+)(>)", value):
+        if re.match(r"(<)([\w-]+)(>)", value):
             return _ContentType.ARGS
         return None
 
