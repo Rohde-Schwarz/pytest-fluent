@@ -26,7 +26,9 @@ class Event:
     ) -> None:
         """Initialize custom event class."""
         self.senders = {
-            tag: FluentSender(tag=tag, host=host, port=port, **kwargs) for tag in tags
+            tag: FluentSender(tag=tag, host=host, port=port, **kwargs)
+            for tag in tags
+            if tag
         }
 
     def __call__(self, tag: str, label: str, data: dict, **kwargs):
@@ -38,6 +40,9 @@ class Event:
             data (dict): Data to transmit as dictionary.
         """
         assert isinstance(data, dict), "data must be a dict"
+        # Return if tag is empty string
+        if not tag:
+            return
         sender_ = self.senders.get(tag)
         if sender_ is None or not isinstance(sender_, FluentSender):
             LOGGER.warning("Could not retrieve fluent instance for tag %s", tag)
