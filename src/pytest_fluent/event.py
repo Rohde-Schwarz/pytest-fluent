@@ -40,8 +40,8 @@ class Event:
         assert isinstance(data, dict), "data must be a dict"
         sender_ = self.senders.get(tag)
         if sender_ is None or not isinstance(sender_, FluentSender):
-            LOGGER.warning(f"Could not retrieve fluent instance for tag {tag}")
+            LOGGER.warning("Could not retrieve fluent instance for tag %s", tag)
             return
         timestamp = kwargs.get("time", int(time.time()))
         if not sender_.emit_with_time(label, timestamp, data):
-            LOGGER.warning(f"Could not send data via fluent for tag {tag}: {data}")
+            LOGGER.warning("Could not send data via fluent for tag %s: %s", tag, data)
