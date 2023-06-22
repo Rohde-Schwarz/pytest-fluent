@@ -65,15 +65,12 @@
                     }
                 },
                 "add": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "$ref": "#/definitions/RegexString"
-                    }
+                    "type": "object"
                 },
                 "drop": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/RegexString"
+                        "type": "string"
                     }
                 }
             }

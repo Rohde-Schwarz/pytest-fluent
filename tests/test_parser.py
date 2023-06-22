@@ -71,7 +71,13 @@ def test_more_complex_json_file(default):
             "tag": "result",
             "label": "test",
             "replace": {"keys": {"sessionId": "id"}},
-            "add": {"root_id": "8dcf8f65-35a6-4b9e-af88-e3ec9743eab9"},
+            "add": {
+                "root_id": "8dcf8f65-35a6-4b9e-af88-e3ec9743eab9",
+                "additional_information": {
+                    "name": "super_complex",
+                    "more": {"name": "more_data", "id": 1},
+                },
+            },
             "drop": ["status"],
         },
         "pytest_runtest_logstart": {
