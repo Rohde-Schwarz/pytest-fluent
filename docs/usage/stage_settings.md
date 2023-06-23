@@ -169,7 +169,7 @@ Probably, your stage setting would look like
 }
 ```
 
-The following values are supported
+The following values are supported:
 
 | Key name  | action                                                                                 | type             |
 | --------- | -------------------------------------------------------------------------------------- | ---------------- |
