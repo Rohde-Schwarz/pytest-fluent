@@ -128,10 +128,6 @@ class ContentPatcher:
     @staticmethod
     def _patch_stage_content(stage_content: dict, user_settings: dict) -> dict:
         stage_content_patched = stage_content.copy()
-        if "tag" in user_settings:
-            stage_content_patched["tag"] = user_settings["tag"]
-        if "label" in user_settings:
-            stage_content_patched["label"] = user_settings["label"]
         if "replace" in user_settings:
             replace_it = user_settings["replace"]
             if "keys" in replace_it:
