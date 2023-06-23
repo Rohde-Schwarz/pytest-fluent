@@ -187,8 +187,6 @@ def test_stage_settings(user_settings, user_settings_patched, stage_names):
                 "sessionId": UNIQUE_IDENTIFIER,
             },
             {
-                "tag": "run",
-                "label": "test",
                 "state": "start",
                 "stage": "session",
                 "id": UNIQUE_IDENTIFIER,
@@ -203,8 +201,6 @@ def test_stage_settings(user_settings, user_settings_patched, stage_names):
                 "sessionId": UNIQUE_IDENTIFIER,
             },
             {
-                "tag": "result",
-                "label": "test",
                 "state": "finish",
                 "stage": "session",
                 "id": UNIQUE_IDENTIFIER,
@@ -221,8 +217,6 @@ def test_stage_settings(user_settings, user_settings_patched, stage_names):
                 "name": "testcase",
             },
             {
-                "tag": "run",
-                "label": "testcase",
                 "state": "start",
                 "stage": "testcase",
                 "id": UNIQUE_IDENTIFIER,
@@ -241,8 +235,6 @@ def test_stage_settings(user_settings, user_settings_patched, stage_names):
                 "name": "testcase",
             },
             {
-                "tag": "result",
-                "label": "testcase",
                 "state": "finish",
                 "stage": "testcase",
                 "id": UNIQUE_IDENTIFIER,
@@ -271,8 +263,6 @@ def test_patch_content(to_patch, expected, stage, user_settings_patched):
                 "sessionId": UNIQUE_IDENTIFIER,
             },
             {
-                "tag": "run",
-                "label": "test",
                 "state": "start",
                 "stage": "session",
                 "id": UNIQUE_IDENTIFIER,
