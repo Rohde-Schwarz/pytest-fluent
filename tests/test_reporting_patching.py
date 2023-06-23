@@ -60,23 +60,21 @@ from .conftest import SESSION_UUID
                     "replace": {
                         "keys": {"status": "state", "sessionId": "id"},
                     },
+                    "drop": ["stage", "state"],
                 },
                 "pytest_runtest_logreport": {
                     "replace": {
                         "values": {"passed": "pass", "failed": "fail"},
                     },
                     "add": {"stop_info": "Testcase finished"},
+                    "drop": ["when"],
                 },
             },
             [
                 {
-                    "state": "start",
-                    "stage": "session",
                     "id": str(SESSION_UUID),
                 },
                 {
-                    "state": "start",
-                    "stage": "testcase",
                     "id": str(SESSION_UUID),
                     "name": "test_data_reporter_with_patched_values.py::test_base",
                 },
@@ -87,25 +85,18 @@ from .conftest import SESSION_UUID
                     "stack_trace": "None",
                     "message": "Test running",
                     "id": str(SESSION_UUID),
-                    "stage": "testcase",
                 },
                 {
                     "name": "test_data_reporter_with_patched_values.py::test_base",
                     "outcome": "pass",
-                    "stage": "testcase",
-                    "when": "call",
                     "id": str(SESSION_UUID),
                     "stop_info": "Testcase finished",
                 },
                 {
-                    "state": "finish",
-                    "stage": "testcase",
                     "id": str(SESSION_UUID),
                     "name": "test_data_reporter_with_patched_values.py::test_base",
                 },
                 {
-                    "state": "finish",
-                    "stage": "session",
                     "id": str(SESSION_UUID),
                 },
             ],

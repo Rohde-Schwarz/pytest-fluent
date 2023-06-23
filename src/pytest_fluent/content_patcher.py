@@ -48,8 +48,12 @@ class ContentPatcher:
             for key, value in stage_info.items():
                 value = self._patch_value(key, value)
                 if isinstance(value, dict):
-                    value = self._merge_patched_values(
+                    value = self._merge_patched_dict_values(
                         patched[stage_name].get(key, {}), value
+                    )
+                if isinstance(value, list):
+                    value = self._merge_patched_list_values(
+                        patched[stage_name].get(key, []), value
                     )
                 patched[stage_name].update({key: value})
         return patched
@@ -68,10 +72,14 @@ class ContentPatcher:
                 value = self._get_env_or_args(value)
         return value
 
-    def _merge_patched_values(self, old: dict, new: dict) -> dict:
+    def _merge_patched_dict_values(self, old: dict, new: dict) -> dict:
         merged = old.copy()
         for key, value in new.items():
             merged[key] = value
+        return merged
+
+    def _merge_patched_list_values(self, old: list, new: list) -> list:
+        merged = list(set(old + new))
         return merged
 
     @property
