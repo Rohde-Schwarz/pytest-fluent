@@ -8,7 +8,7 @@ TEST_STAGE = "pytest_runtest_logstart"
 
 
 def additional_information_callback(stage_name: str):
-    """Set custom informatino callback for any stage.
+    """Set custom information callback for any stage.
 
     Args:
         stage_name (str): Linked stage name.
