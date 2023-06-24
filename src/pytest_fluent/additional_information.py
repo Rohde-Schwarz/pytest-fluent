@@ -66,6 +66,7 @@ def get_additional_information_callback(
     Returns:
         typing.Dict[str, typing.Any]: Additional information dictionary.
     """
+    # If stage name is not provided directly, get calling stage name via reflection
     if stage is None:
         stage = inspect.stack()[1][3]
     info: typing.Dict[str, typing.Any] = {}
@@ -73,7 +74,8 @@ def get_additional_information_callback(
     if functions is None:
         return info
     for function in functions:
-        info.update(function())
-    if not isinstance(info, dict):
-        return {}
+        sub_info = function()
+        if not isinstance(sub_info, dict):
+            continue
+        info.update(sub_info)
     return info
