@@ -79,7 +79,7 @@ class ContentPatcher:
         return merged
 
     def _merge_patched_list_values(self, old: list, new: list) -> list:
-        merged =  [*{*old, *new}]
+        merged = [*{*old, *new}]
         return merged
 
     @property
@@ -170,8 +170,6 @@ class ContentPatcher:
 
     @staticmethod
     def _is_reference_string(value: str) -> typing.Optional[_ContentType]:
-        if not isinstance(value, str):
-            return None
         if re.match(r"(\$)?({)([\w_]+)(})", value):
             return _ContentType.ENV
         if re.match(r"(<)([\w-]+)(>)", value):
