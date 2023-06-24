@@ -79,7 +79,7 @@ class ContentPatcher:
         return merged
 
     def _merge_patched_list_values(self, old: list, new: list) -> list:
-        merged = list(set(old + new))
+        merged =  [*{*old, *new}]
         return merged
 
     @property
