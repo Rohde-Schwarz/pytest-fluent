@@ -64,10 +64,14 @@ class ContentPatcher:
         else:
             if isinstance(value, dict):
                 for subkey, subvalue in value.items():
+                    if not isinstance(subvalue, str):
+                        continue
                     value[subkey] = self._get_env_or_args(subvalue)
             elif isinstance(value, list):
-                for idx, _ in enumerate(value):
-                    value[idx] = self._get_env_or_args(value[idx])
+                for idx, subvalue in enumerate(value):
+                    if not isinstance(subvalue, str):
+                        continue
+                    value[idx] = self._get_env_or_args(subvalue)
             else:
                 value = self._get_env_or_args(value)
         return value
