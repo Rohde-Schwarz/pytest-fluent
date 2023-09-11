@@ -29,7 +29,7 @@ jobs:
         run: |
           tox -e test -- --junitxml=results.xml tests/
       - name: Test report
-        uses: mikepenz/action-junit-report@v3
+        uses: mikepenz/action-junit-report@v4
         if: always()
         with:
           check_name: Test Report (${{ matrix.os }}, ${{ matrix.python }})
