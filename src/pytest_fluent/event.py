@@ -49,4 +49,14 @@ class Event:
             return
         timestamp = kwargs.get("time", int(time.time()))
         if not sender_.emit_with_time(label, timestamp, data):
-            LOGGER.warning("Could not send data via fluent for tag %s: %s", tag, data)
+            if sender_.last_error:
+                LOGGER.warning(
+                    "Error '%s' while sending data via fluent for tag '%s': '%s'",
+                    sender_.last_error,
+                    tag,
+                    data,
+                )
+            else:
+                LOGGER.warning(
+                    "Could not send data via fluent for tag '%s': '%s'", tag, data
+                )
