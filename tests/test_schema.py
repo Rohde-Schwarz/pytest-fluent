@@ -1,12 +1,8 @@
 import json
+from importlib.resources import files
 
 import jsonschema
 import pytest
-
-try:
-    from importlib.resources import files
-except ImportError:
-    from importlib_resources import files
 
 pytest_fluent_resources = files("pytest_fluent")
 schema_file = pytest_fluent_resources / "data" / "schema.stage.json"
@@ -15,14 +11,14 @@ default_file = pytest_fluent_resources / "data" / "default.stage.json"
 
 @pytest.fixture
 def default() -> dict:
-    with open(default_file, "r") as fp:
+    with open(str(default_file), "r") as fp:
         default = json.load(fp)
     return default
 
 
 @pytest.fixture
 def schema() -> dict:
-    with open(schema_file, "r") as fp:
+    with open(str(schema_file), "r") as fp:
         schema = json.load(fp)
     return schema
 

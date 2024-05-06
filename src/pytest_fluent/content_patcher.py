@@ -1,4 +1,5 @@
 """Patch content according to settings."""
+
 import argparse
 import enum
 import inspect

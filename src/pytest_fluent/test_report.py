@@ -1,4 +1,5 @@
 """Extract result information."""
+
 # The MIT License (MIT)
 
 # Copyright (c) 2019 Israel Fruchter

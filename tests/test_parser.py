@@ -1,7 +1,10 @@
 import argparse
+import json
 import os
+from io import StringIO
 
 import pytest
+from ruamel.yaml import YAML
 
 from pytest_fluent.setting_file_loader_action import SettingFileLoaderAction
 
@@ -19,6 +22,16 @@ parser.add_argument(
 @pytest.fixture
 def default() -> dict:
     return {"all": {"tag": "<fluentd-tag>", "label": "<fluentd-label>"}}
+
+
+@pytest.fixture(scope="session")
+def complex() -> dict:
+    with open(
+        os.path.join(os.path.dirname(__file__), "data", "complex.json"),
+        mode="r",
+        encoding="utf-8",
+    ) as fp:
+        return json.load(fp)
 
 
 def test_json_file(default):
@@ -42,7 +55,9 @@ def test_yaml_file(default):
 
 
 def test_xml_error():
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="Wrong input format or file type not supported."
+    ):
         parser.parse_args(
             [
                 "--stage-settings",
@@ -51,15 +66,15 @@ def test_xml_error():
         )
 
 
-def test_more_complex_json_file(default):
+def test_more_complex_json_file(complex):
     args = parser.parse_args(
         [
             "--stage-settings",
             os.path.join(os.path.dirname(__file__), "data", "complex.json"),
         ]
     )
-    assert args.settings == {
-        "all": {"tag": "", "label": "", "drop": ["stage"]},
+    assert args.settings == complex
+
         "pytest_sessionstart": {
             "tag": "run",
             "label": "test",
@@ -94,9 +109,3 @@ def test_more_complex_json_file(default):
             },
             "drop": ["status", "when", "markers"],
         },
-        "logging": {
-            "tag": "run",
-            "label": "logging",
-            "replace": {"keys": {"message": "msg", "sessionId": "id"}},
-        },
-    }

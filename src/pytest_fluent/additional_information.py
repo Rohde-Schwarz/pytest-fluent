@@ -1,4 +1,5 @@
 """Set additional information function handler."""
+
 import inspect
 import typing
 
