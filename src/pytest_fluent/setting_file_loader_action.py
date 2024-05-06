@@ -5,6 +5,7 @@ import json
 import os
 import re
 import typing
+from io import StringIO
 
 import jsonschema
 from ruamel.yaml import YAML
@@ -31,9 +32,20 @@ def load_and_check_settings_file(file_name: str) -> typing.Dict[str, typing.Any]
     Returns:
         typing.Dict[str, typing.Any]: User settings dictionary.
     """
-    if file_name.endswith(".json"):
+    splitted = re.split(
+        r":",
+        file_name,
+        maxsplit=1,
+        flags=re.IGNORECASE | re.MULTILINE,
+    )
+    if len(splitted) == 1:
+        file_data = splitted[0]
+        data_format = None
+    if len(splitted) == 2:
+        data_format, file_data = splitted
+    if data_format == "json" or file_data.endswith(".json"):
         pickle = json
-    elif file_name.endswith(".yaml"):
+    elif data_format == "yaml" or file_data.endswith(".yaml"):
         pickle = YAML()
 
         def loads(file_pointer):
