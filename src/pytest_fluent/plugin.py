@@ -1,4 +1,5 @@
 """pytest-fluent-logging plugin definition."""
+
 import datetime
 import logging
 import os
@@ -30,7 +31,14 @@ DOCSTRING_STASHKEY = pytest.StashKey[str]()
 
 
 class FluentLoggerRuntime(object):
+    """Fluent logger runtime.
+
+    Args:
+        config (_type_): Pytest configuration
+    """
+
     def __init__(self, config):
+        """Initialize fluent-logger runtime."""
         self._session_uuid = None
         self._session_start_time = None
         self._test_uuid = None
@@ -116,7 +124,7 @@ class FluentLoggerRuntime(object):
         return str(self._test_uuid)
 
     def pytest_sessionstart(self):
-        """Custom hook for session start."""
+        """Customize hook for session start."""
         set_stage("session")
         self._session_start_time = time.time()
         if not self.config.getoption("collectonly"):
@@ -132,7 +140,7 @@ class FluentLoggerRuntime(object):
             self._event(tag, label, data)
 
     def pytest_runtest_logstart(self, nodeid: str, location: typing.Tuple[int, str]):
-        """Custom hook for test start."""
+        """Customize hook for test start."""
         set_stage("testcase")
         if not self.config.getoption("collectonly"):
             self._create_test_unique_identifier()
@@ -150,7 +158,7 @@ class FluentLoggerRuntime(object):
             self._event(tag, label, data)
 
     def pytest_runtest_setup(self, item: pytest.Item):
-        """Custom hook for test setup."""
+        """Customize hook for test setup."""
         set_stage("testcase")
         docstring = get_test_docstring(item)
         item.stash[DOCSTRING_STASHKEY] = docstring
@@ -158,7 +166,7 @@ class FluentLoggerRuntime(object):
             pass
 
     def pytest_runtest_teardown(self, item: pytest.Item, nextitem: pytest.Item):
-        """Custom hook for test teardown."""
+        """Customize hook for test teardown."""
         set_stage("testcase")
         docstring = get_test_docstring(item)
         item.stash[DOCSTRING_STASHKEY] = docstring
@@ -166,20 +174,20 @@ class FluentLoggerRuntime(object):
             pass
 
     def pytest_runtest_call(self, item: pytest.Item):
-        """Custom hook for test call."""
+        """Customize hook for test call."""
         set_stage("testcase")
         if not self.config.getoption("collectonly"):
             pass
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_makereport(self, item: pytest.Item, call):
-        """Custom hook for make report."""
+        """Customize hook for make report."""
         report = (yield).get_result()
         docstring = item.stash.get(DOCSTRING_STASHKEY, None)
         report.stash = {DOCSTRING_KEY: docstring}
 
     def pytest_runtest_logreport(self, report: pytest.TestReport):
-        """Custom hook for logging results."""
+        """Customize hook for logging results."""
         set_stage("testcase")
         if not self.config.getoption("collectonly"):
             data = self._log_reporter(report)
@@ -208,7 +216,7 @@ class FluentLoggerRuntime(object):
         nodeid: str,
         location: typing.Tuple[str, typing.Optional[int], str],
     ):
-        """Custom hook for test end."""
+        """Customize hook for test end."""
         set_stage("testcase")
         if not self.config.getoption("collectonly"):
             data = {
@@ -229,7 +237,7 @@ class FluentLoggerRuntime(object):
         session: pytest.Session,
         exitstatus: typing.Union[int, pytest.ExitCode],
     ):
-        """Custom hook for session end."""
+        """Customize hook for session end."""
         set_stage("session")
         if not self.config.getoption("collectonly"):
             data = {
@@ -378,7 +386,7 @@ def test_uid() -> typing.Optional[str]:
 
 
 class RecordFormatter(FluentRecordFormatter):
-    """Extension of FluentRecordFormatter in order to add unique ID's"""
+    """Extension of FluentRecordFormatter in order to add unique ID's."""
 
     def __init__(self, patcher: typing.Optional[ContentPatcher], *args, **kwargs):
         """Specific initilization."""
@@ -434,7 +442,7 @@ def add_handler(
 
 
 def overflow_handler(pendings):
-    """Custom overflow handler."""
+    """Customize overflow handler."""
     unpacker = msgpack.Unpacker(BytesIO(pendings))
     for unpacked in unpacker:
         print(unpacked)

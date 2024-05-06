@@ -1,4 +1,5 @@
 """Tests for ContentPatcher."""
+
 # pylint: disable=W0212, C0116, W0621
 import argparse
 import typing

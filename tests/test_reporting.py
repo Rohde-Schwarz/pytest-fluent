@@ -65,12 +65,13 @@ def check_for_verdict(session_uuid, report: dict):
     name = report["name"].split("::")[1]
     assert report.get("outcome") == "passed"
     assert "duration" in report
+    assert report.get("sessionId") == str(session_uuid)
+    assert "testId" in report
     markers = report.get("markers")
+    assert markers is not None
     assert markers.get(name) == 1
     assert markers.get("test_data_reporter_xdist_passed.py") == 1
     assert markers.get("test_data_reporter_xdist_passed0") == 1
-    assert report.get("sessionId") == str(session_uuid)
-    assert "testId" in report
 
 
 def test_data_reporter_base_with_xfail(run_mocked_pytest, session_uuid):
