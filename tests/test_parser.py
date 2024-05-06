@@ -75,37 +75,37 @@ def test_more_complex_json_file(complex):
     )
     assert args.settings == complex
 
-        "pytest_sessionstart": {
-            "tag": "run",
-            "label": "test",
-            "replace": {"keys": {"sessionId": "id"}},
-            "drop": ["status"],
-            "add": {"root_id": "8dcf8f65-35a6-4b9e-af88-e3ec9743eab9"},
-        },
-        "pytest_sessionfinish": {
-            "tag": "result",
-            "label": "test",
-            "replace": {"keys": {"sessionId": "id"}},
-            "add": {
-                "root_id": "8dcf8f65-35a6-4b9e-af88-e3ec9743eab9",
-                "additional_information": {
-                    "name": "super_complex",
-                    "more": {"name": "more_data", "id": 1},
-                },
-            },
-            "drop": ["status"],
-        },
-        "pytest_runtest_logstart": {
-            "tag": "run",
-            "label": "testcase",
-            "replace": {"keys": {"sessionId": "root_id", "testId": "id"}},
-            "drop": ["status"],
-        },
-        "pytest_runtest_logreport": {
-            "tag": "result",
-            "label": "testcase",
-            "replace": {
-                "keys": {"sessionId": "root_id", "testId": "id", "outcome": "result"}
-            },
-            "drop": ["status", "when", "markers"],
-        },
+
+def test_more_complex_json_string(complex):
+    args = parser.parse_args(
+        [
+            "--stage-settings",
+            f"json:{json.dumps(complex, indent=0)}",
+        ]
+    )
+    assert args.settings == complex
+
+
+def test_more_complex_yaml_string(complex):
+    yaml = YAML()
+    io = StringIO()
+    yaml.dump(complex, io)
+    args = parser.parse_args(
+        [
+            "--stage-settings",
+            f"yaml:{io.getvalue()}",
+        ]
+    )
+    assert args.settings == complex
+
+
+def test_wrong_input_format():
+    with pytest.raises(
+        ValueError, match="Wrong input format or file type not supported."
+    ):
+        parser.parse_args(
+            [
+                "--stage-settings",
+                "abc-def",
+            ]
+        )
