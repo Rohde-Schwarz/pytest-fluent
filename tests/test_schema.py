@@ -1,8 +1,14 @@
 import json
-from importlib.resources import files
+import sys
 
 import jsonschema
 import pytest
+
+if sys.version_info[:2] > (3, 8):
+    from importlib.resources import files
+else:
+    from importlib_resources import files
+
 
 pytest_fluent_resources = files("pytest_fluent")
 schema_file = pytest_fluent_resources / "data" / "schema.stage.json"

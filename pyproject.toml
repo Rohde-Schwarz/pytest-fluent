@@ -1,16 +1,24 @@
 [project]
+dependencies = [
+    "pytest>=7.0.0",
+    "msgpack",
+    "six",
+    "fluent-logger",
+    "jsonschema",
+    "ruamel.yaml",
+]
 name = "pytest-fluent"
 authors = [
-    {name = "Rohde & Schwarz GmbH & Co. KG", email = "info@rohde-schwarz.com"},
+    { name = "Rohde & Schwarz GmbH & Co. KG", email = "info@rohde-schwarz.com" },
 ]
 maintainers = [
-    {name = "Carsten Sauerbrey", email = "carsten.sauerbrey@rohde-schwarz.com"},
-    {name = "Nicola Lambiase", email = "nicola.lambiase@rohde-schwarz.com"}
+    { name = "Carsten Sauerbrey", email = "carsten.sauerbrey@rohde-schwarz.com" },
+    { name = "Nicola Lambiase", email = "nicola.lambiase@rohde-schwarz.com" },
 ]
 description = "A pytest plugin in order to provide logs via fluentd"
 readme = "README.md"
 keywords = ["pytest", "logging", "fluent"]
-license = {text = "MIT"}
+license = { text = "MIT" }
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -26,34 +34,23 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Framework :: Pytest"
+    "Framework :: Pytest",
 ]
 requires-python = ">=3.8"
-dependencies = [
-    "pytest>=7.0.0",
-    "msgpack",
-    "six",
-    "fluent-logger",
-    "jsonschema",
-    "ruamel.yaml",
-]
 dynamic = ["version"]
 
 [project.urls]
 project = "https://github.com/Rohde-Schwarz/pytest-fluent"
 
 [project.optional-dependencies]
-docs = [
-    "sphinx",
-    "sphinx-rtd-theme",
-    "myst-parser"
-]
+docs = ["sphinx", "sphinx-rtd-theme", "myst-parser"]
 test = [
     "pytest",
     "coverage[toml]",
     "pytest-cov",
     "pytest-xdist[psutil]",
-    "six"
+    "six",
+    "importlib-resources; python_version<='3.8'",
 ]
 
 [build-system]
