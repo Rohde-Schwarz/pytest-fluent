@@ -127,6 +127,7 @@ def test_base():
 
 Custom settings for each supported stage can be easily setup. You have to create a file with
 a `.json` or `.yaml` extension and call pytest with this additional parameter `--stage-settings`.
+It's also possible to inject a serialized string with the following prefix `--stage-settings json;{...}`.
 
 The file will be validated against a schema of supported values and in case of an error, a `jsonschema.ValidationError`
 will be thrown.
