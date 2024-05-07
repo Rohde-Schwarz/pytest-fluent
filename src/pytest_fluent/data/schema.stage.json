@@ -3,7 +3,14 @@
     "type": "object",
     "patternProperties": {
         "all|pytest_sessionfinish|pytest_sessionstart|pytest_runtest_logstart|pytest_runtest_logreport|pytest_runtest_logfinish|logging": {
-            "$ref": "#/definitions/AdditionalProperties"
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/AdditionalProperties"
+                },
+                {
+                    "$ref": "#/definitions/LogFormatter"
+                }
+            ]
         }
     },
     "anyOf": [
@@ -22,7 +29,22 @@
         {
             "type": "object",
             "patternProperties": {
-                "pytest_sessionfinish|pytest_sessionstart|pytest_runtest_logstart|pytest_runtest_logreport|pytest_runtest_logfinish|logging": {
+                "logging": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/AdditionalProperties"
+                        },
+                        {
+                            "$ref": "#/definitions/LogFormatter"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "object",
+            "patternProperties": {
+                "pytest_sessionfinish|pytest_sessionstart|pytest_runtest_logstart|pytest_runtest_logreport|pytest_runtest_logfinish": {
                     "$ref": "#/definitions/AdditionalProperties"
                 }
             }
@@ -74,6 +96,55 @@
                     }
                 }
             }
+        },
+        "LogFormatter": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "recordFormatter": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "module": {
+                            "type": "string",
+                            "regex": "^([a-z_][a-z0-9_]*)+(\\.[a-z_][a-z0-9_]*)*$"
+                        },
+                        "filePath": {
+                            "type": "string"
+                        },
+                        "className": {
+                            "type": "string"
+                        }
+                    },
+                    "oneOf": [
+                        {
+                            "module": {
+                                "type": "string",
+                                "regex": "^([a-z_][a-z0-9_]*)+(\\.[a-z_][a-z0-9_]*)*$"
+                            },
+                            "required": [
+                                "module",
+                                "className"
+                            ]
+                        },
+                        {
+                            "filePath": {
+                                "type": "string"
+                            },
+                            "required": [
+                                "filePath",
+                                "className"
+                            ]
+                        }
+                    ],
+                    "required": [
+                        "className"
+                    ]
+                }
+            },
+            "required": [
+                "recordFormatter"
+            ]
         }
     },
     "required": [

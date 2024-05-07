@@ -1,3 +1,4 @@
+import pathlib
 import uuid
 from unittest.mock import MagicMock, patch
 
@@ -81,3 +82,16 @@ def run_mocked_pytest(runpytest, fluentd_sender):
     """Create a temporary pytest environment with FluentSender mock."""
 
     return runpytest, fluentd_sender
+
+
+@pytest.fixture()
+def record_formatter_file(pytester) -> pathlib.Path:
+    path = pytester.makepyfile(
+        record_formatter="""
+    import logging
+
+    class RecordFormatter(logging.Formatter):
+        pass
+    """
+    )
+    return path
