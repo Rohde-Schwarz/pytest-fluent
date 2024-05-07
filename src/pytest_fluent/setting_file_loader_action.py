@@ -33,7 +33,7 @@ def load_and_check_settings_file(file_name: str) -> typing.Dict[str, typing.Any]
         typing.Dict[str, typing.Any]: User settings dictionary.
     """
     splitted = re.split(
-        r":",
+        r";",
         file_name,
         maxsplit=1,
         flags=re.IGNORECASE | re.MULTILINE,

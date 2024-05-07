@@ -80,7 +80,7 @@ def test_more_complex_json_string(complex):
     args = parser.parse_args(
         [
             "--stage-settings",
-            f"json:{json.dumps(complex, indent=0)}",
+            f"json;{json.dumps(complex, indent=0)}",
         ]
     )
     assert args.settings == complex
@@ -93,7 +93,7 @@ def test_more_complex_yaml_string(complex):
     args = parser.parse_args(
         [
             "--stage-settings",
-            f"yaml:{io.getvalue()}",
+            f"yaml;{io.getvalue()}",
         ]
     )
     assert args.settings == complex
