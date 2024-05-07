@@ -216,6 +216,63 @@ At the moment, the following values can be changed
 * `session`
 * `testcase`
 
+##### Use custom RecordFormatter class
+
+If you want to use you own custom record formatter class, you can load you own file by setting in the `logging`
+the `recordFormatter` key with the following object:
+
+```json
+{
+	...
+    "logging": {
+      "recordFormatter": {
+        "className": "RecordFormatter",
+          "filePath": "path/to/my/record/formatter.py"
+      }
+    }
+}
+```
+
+which loads the following `RecordFormatter`
+
+```python
+# path/to/my/record/formatter.py
+import logging
+from pytest_fluent import get_session_uid, get_test_uid
+
+def class RecordFormatter(logging.Formatter):
+
+    def format(self, record) -> typing.Any:
+        """Format the specified record as text."""
+        return {
+            "date": datetime.datetime.utcfromtimestamp(record.created).isoformat(),
+            "session_id": get_session_uid(),
+            "test_id": get_test_uid(),
+            "level": record.levelno,
+            "msg": record.msg,
+            "class": record.module,
+            "method": record.funcName,
+            "src": record.filename,
+            "line": record.lineno,
+            "pid": record.process,
+            "tid": record.thread,
+        }
+```
+
+You can also load it as a module from e.g. the site-packages
+
+```json
+{
+	...
+    "logging": {
+      "recordFormatter": {
+        "className": "RecordFormatter",
+          "module": "path.to.my.record.formatter"
+      }
+    }
+}
+```
+
 ##### Use values from ARGV and ENV
 
 If you want to use data provided by the command line arguments or directly from environment variables,

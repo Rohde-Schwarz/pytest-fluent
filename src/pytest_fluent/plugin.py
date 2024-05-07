@@ -13,6 +13,8 @@ import msgpack
 import pytest
 from fluent.handler import FluentHandler, FluentRecordFormatter
 
+from pytest_fluent.importlib_utils import extract_function_from_module_string
+
 from .additional_information import get_additional_information_callback
 from .content_patcher import ContentPatcher
 from .event import Event
@@ -83,12 +85,7 @@ class FluentLoggerRuntime(object):
         label = self._content_patcher.user_settings.get("logging", {}).get("label")
         if label:
             tag = f"{tag}.{label}"
-        extend_loggers(
-            self._host,
-            self._port,
-            tag,
-            self._content_patcher,
-        )
+        extend_loggers(self._host, self._port, tag, self._content_patcher)
 
     def _set_session_uid(
         self, id: typing.Optional[typing.Union[str, uuid.UUID]] = None
@@ -383,8 +380,6 @@ def test_uid() -> typing.Optional[str]:
 
 
 # Logging extensions
-
-
 class RecordFormatter(FluentRecordFormatter):
     """Extension of FluentRecordFormatter in order to add unique ID's."""
 
@@ -406,14 +401,23 @@ class RecordFormatter(FluentRecordFormatter):
         return data
 
 
-def extend_loggers(host, port, tag, patcher: ContentPatcher) -> None:
+def extend_loggers(
+    host,
+    port,
+    tag,
+    patcher: ContentPatcher,
+) -> None:
     """Extend Python logging with a Fluentd handler."""
     modify_logger(host, port, tag, None, patcher)
     modify_logger(host, port, tag, "fluent", patcher)
 
 
 def modify_logger(
-    host, port, tag, name=None, patcher: typing.Optional[ContentPatcher] = None
+    host,
+    port,
+    tag,
+    name=None,
+    patcher: typing.Optional[ContentPatcher] = None,
 ) -> None:
     """Extend Python logging with a Fluentd handler."""
     logger = logging.getLogger(name)
@@ -421,24 +425,72 @@ def modify_logger(
 
 
 def add_handler(
-    host, port, tag, logger, patcher: typing.Optional[ContentPatcher] = None
+    host,
+    port,
+    tag,
+    logger,
+    patcher: typing.Optional[ContentPatcher] = None,
 ):
     """Add handler to a specific logger."""
     handler = FluentHandler(
         tag, host=host, port=port, buffer_overflow_handler=overflow_handler
     )
-    formatter = RecordFormatter(
-        patcher,
-        {
-            "type": "logging",
-            "host": "%(hostname)s",
-            "where": "%(module)s.%(funcName)s",
-            "level": "%(levelname)s",
-            "stack_trace": "%(exc_text)s",
-        },
-    )
+    formatter = get_formatter(patcher)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
+
+
+def get_formatter(patcher: typing.Optional[ContentPatcher] = None) -> logging.Formatter:
+    """Get a prepared logging formatter.
+
+    Args:
+        patcher (typing.Optional[ContentPatcher], optional): Patcher handler.
+            Defaults to None.
+
+    Returns:
+        logging.Formatter: Formatter instance
+    """
+    if patcher:
+        record_formatter = patcher.user_settings.get("logging", {}).get(
+            "recordFormatter"
+        )
+    else:
+        record_formatter = None
+    if record_formatter:
+        formatter = load_record_formatter_class(record_formatter)
+    else:
+        formatter = RecordFormatter(
+            patcher,
+            {
+                "type": "logging",
+                "host": "%(hostname)s",
+                "where": "%(module)s.%(funcName)s",
+                "level": "%(levelname)s",
+                "stack_trace": "%(exc_text)s",
+            },
+        )
+
+    return formatter
+
+
+def load_record_formatter_class(
+    record_formatter_settings: typing.Dict[str, str]
+) -> logging.Formatter:
+    """Load a custom record formatter.
+
+    Args:
+        record_formatter_settings (typing.Dict[str, str]): Record formatter settings
+
+    Returns:
+        logging.Formatter: Record formatter instance
+    """
+    record_formatter = extract_function_from_module_string(
+        record_formatter_settings["className"],
+        record_formatter_settings.get("module"),
+        record_formatter_settings.get("filePath"),
+    )
+    record_formatter_instance = record_formatter()
+    return record_formatter_instance
 
 
 def overflow_handler(pendings):
