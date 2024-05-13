@@ -241,7 +241,7 @@ which loads the following `RecordFormatter`
 import logging
 from pytest_fluent import get_session_uid, get_test_uid
 
-def class RecordFormatter(logging.Formatter):
+class RecordFormatter(logging.Formatter):
 
     def format(self, record) -> typing.Any:
         """Format the specified record as text."""
