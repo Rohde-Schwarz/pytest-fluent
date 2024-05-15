@@ -99,7 +99,7 @@
         },
         "LogFormatter": {
             "type": "object",
-            "additionalProperties": false,
+            "additionalProperties": true,
             "properties": {
                 "recordFormatter": {
                     "type": "object",
