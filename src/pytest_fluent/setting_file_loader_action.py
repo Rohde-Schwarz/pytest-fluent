@@ -38,6 +38,8 @@ def load_and_check_settings_file(file_name: str) -> typing.Dict[str, typing.Any]
         maxsplit=1,
         flags=re.IGNORECASE | re.MULTILINE,
     )
+    file_data = ""
+    data_format = None
     if len(splitted) == 1:
         file_data = splitted[0]
         data_format = None

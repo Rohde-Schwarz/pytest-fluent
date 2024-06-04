@@ -3,9 +3,20 @@
 import inspect
 import typing
 
+import pytest
+
+T = typing.TypeVar("T")
+
 INFORMATION_CALLBACKS: typing.Dict[str, typing.List[typing.Callable]] = {}
 SESSION_STAGE = "pytest_sessionstart"
 TEST_STAGE = "pytest_runtest_logstart"
+SUPPORTED_STAGES = [
+    "pytest_sessionstart",
+    "pytest_sessionfinish",
+    "pytest_runtest_logstart",
+    "pytest_runtest_logreport",
+    "pytest_runtest_logfinish",
+]
 
 
 def additional_information_callback(stage_name: str):
@@ -14,6 +25,8 @@ def additional_information_callback(stage_name: str):
     Args:
         stage_name (str): Linked stage name.
     """
+    if stage_name not in SUPPORTED_STAGES:
+        raise ValueError(f"Stage name {stage_name} not supported.")
 
     def wrapper(function: typing.Callable):
         set_additional_information_callback(stage_name, function)
@@ -50,6 +63,7 @@ def set_additional_information_callback(
         stage (str): Stage name.
         function (typing.Callable): Callback function.
     """
+    check_allowed_input(function)
     if stage in INFORMATION_CALLBACKS:
         INFORMATION_CALLBACKS[stage].append(function)
     else:
@@ -57,11 +71,13 @@ def set_additional_information_callback(
 
 
 def get_additional_information_callback(
+    item: typing.Optional[pytest.Item] = None,
     stage: typing.Optional[str] = None,
 ) -> typing.Dict[str, typing.Any]:
     """Retrieve stage information from callable.
 
     Args:
+        item (typing.Optional[pytest.Item], optional): Current testcase item.
         stage (typing.Optional[str], optional): Stage name. Defaults to None.
 
     Returns:
@@ -75,8 +91,33 @@ def get_additional_information_callback(
     if functions is None:
         return info
     for function in functions:
-        sub_info = function()
+        annotations = function.__annotations__
+        if "item" in annotations and annotations["item"] is pytest.Item:
+            sub_info = function(item)
+        else:
+            sub_info = function()
         if not isinstance(sub_info, dict):
             continue
         info.update(sub_info)
     return info
+
+
+def check_allowed_input(func: T) -> None:
+    """Check that the given function has a specific signature.
+
+    Args:
+        func (T): The function to check.
+    """
+    annotations = func.__annotations__
+
+    if not callable(func) or not all(
+        annotation is Ellipsis or isinstance(annotation, (type, str, type(Ellipsis)))
+        for annotation in annotations.values()
+    ):
+        raise TypeError("Invalid function or annotations")
+
+    args = set(annotations.keys())
+    if "item" in args and not annotations["item"] is pytest.Item:
+        raise TypeError("Invalid function signature for 'item'")
+    if not ("return" in args and annotations["return"] is dict):
+        raise TypeError("Invalid function signature for return type. Expecting a dict.")
