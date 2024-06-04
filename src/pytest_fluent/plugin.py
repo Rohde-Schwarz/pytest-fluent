@@ -53,6 +53,7 @@ class FluentLoggerRuntime(object):
         self._timestamp = config.getoption("--fluentd-timestamp")
         self._extend_logging = config.getoption("--extend-logging")
         self._add_docstrings = config.getoption("--add-docstrings")
+        self.item: typing.Optional[pytest.Item] = None
         stage_names = [method for method in dir(self) if method.startswith("pytest_")]
         stage_names.append("logging")
         self._content_patcher = ContentPatcher(
@@ -136,6 +137,10 @@ class FluentLoggerRuntime(object):
             tag, label = self._content_patcher.get_tag_and_label()
             self._event(tag, label, data)
 
+    def pytest_runtest_protocol(self, item: pytest.Item, nextitem: pytest.Item):
+        """Customize hook for a protocol start."""
+        self.item = item
+
     def pytest_runtest_logstart(self, nodeid: str, location: typing.Tuple[int, str]):
         """Customize hook for test start."""
         set_stage("testcase")
@@ -149,7 +154,15 @@ class FluentLoggerRuntime(object):
                 "name": nodeid,
             }
             data = self._content_patcher.patch(data)
-            data.update(get_additional_information_callback())
+            data.update(
+                get_additional_information_callback(
+                    item=(
+                        None
+                        if self.item is None or self.item.nodeid != nodeid
+                        else self.item
+                    )
+                )
+            )
             self._set_timestamp_information(data=data)
             tag, label = self._content_patcher.get_tag_and_label()
             self._event(tag, label, data)
@@ -204,7 +217,15 @@ class FluentLoggerRuntime(object):
                     data.update({"docstring": docstring})
             self._set_timestamp_information(data=data)
             data = self._content_patcher.patch(data)
-            data.update(get_additional_information_callback())
+            data.update(
+                get_additional_information_callback(
+                    item=(
+                        None
+                        if self.item is None or self.item.nodeid != report.nodeid
+                        else self.item
+                    )
+                )
+            )
             tag, label = self._content_patcher.get_tag_and_label()
             self._event(tag, label, data)
 

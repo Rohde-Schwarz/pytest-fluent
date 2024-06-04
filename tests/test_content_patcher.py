@@ -16,7 +16,9 @@ UNIQUE_IDENTIFIER = str(uuid.uuid4())
 @pytest.fixture
 def stage_names() -> typing.List[str]:
     names = [
-        method for method in dir(FluentLoggerRuntime) if method.startswith("pytest_")
+        method
+        for method in dir(FluentLoggerRuntime)
+        if method.startswith("pytest_") and method not in ["pytest_runtest_protocol"]
     ]
     names.append("logging")
     return names
