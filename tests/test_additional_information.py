@@ -1,3 +1,4 @@
+import typing
 from unittest.mock import patch
 
 import pytest
@@ -19,6 +20,9 @@ def test_allowed_input():
     def add_2(item: pytest.Item) -> dict:
         return {}
 
+    def add_2_opt(item: typing.Optional[pytest.Item] = None) -> dict:
+        return {}
+
     def add_3(item: int) -> dict:
         return {}
 
@@ -27,6 +31,7 @@ def test_allowed_input():
 
     check_allowed_input(add_1)
     check_allowed_input(add_2)
+    check_allowed_input(add_2_opt)
 
     with pytest.raises(TypeError, match="Invalid function signature for 'item'"):
         check_allowed_input(add_3)
