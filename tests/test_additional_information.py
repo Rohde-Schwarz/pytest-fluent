@@ -8,6 +8,47 @@ from pytest_fluent import (
     additional_session_information_callback,
     additional_test_information_callback,
 )
+from pytest_fluent.additional_information import check_allowed_input
+
+
+def test_allowed_input():
+
+    def add_1() -> dict:
+        return {}
+
+    def add_2(item: pytest.Item) -> dict:
+        return {}
+
+    def add_3(item: int) -> dict:
+        return {}
+
+    def add_4() -> int:
+        return 1
+
+    check_allowed_input(add_1)
+    check_allowed_input(add_2)
+
+    with pytest.raises(TypeError, match="Invalid function signature for 'item'"):
+        check_allowed_input(add_3)
+
+    with pytest.raises(
+        TypeError, match="Invalid function signature for return type. Expecting a dict."
+    ):
+        check_allowed_input(add_4)
+
+    with pytest.raises(TypeError, match="Not a function"):
+        check_allowed_input(1)  # type: ignore
+
+
+@patch.object(pytest_fluent.additional_information, "INFORMATION_CALLBACKS", new={})
+def test_additional_information_not_supported(
+    run_mocked_pytest, session_uuid, logging_content
+):
+    with pytest.raises(ValueError):
+
+        @additional_information_callback("test")
+        def test_info() -> dict:
+            return {"type": "myCustomSession"}
 
 
 @patch.object(pytest_fluent.additional_information, "INFORMATION_CALLBACKS", new={})
