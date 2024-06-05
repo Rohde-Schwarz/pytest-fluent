@@ -5,9 +5,7 @@ import typing
 
 import pytest
 
-T = typing.TypeVar("T")
-
-INFORMATION_CALLBACKS: typing.Dict[str, typing.List[typing.Callable]] = {}
+INFORMATION_CALLBACKS: typing.Dict[str, typing.List[typing.Callable[..., dict]]] = {}
 SESSION_STAGE = "pytest_sessionstart"
 TEST_STAGE = "pytest_runtest_logstart"
 SUPPORTED_STAGES = [
@@ -90,32 +88,25 @@ def get_additional_information_callback(
     functions = INFORMATION_CALLBACKS.get(stage)
     if functions is None:
         return info
-    for function in functions:
+    for function in typing.cast(typing.List[typing.Callable[..., dict]], functions):
         annotations = function.__annotations__
         if "item" in annotations and annotations["item"] is pytest.Item:
             sub_info = function(item)
         else:
             sub_info = function()
-        if not isinstance(sub_info, dict):
-            continue
         info.update(sub_info)
     return info
 
 
-def check_allowed_input(func: T) -> None:
+def check_allowed_input(func: typing.Callable) -> None:
     """Check that the given function has a specific signature.
 
     Args:
-        func (T): The function to check.
+        func (typing.Callable): The function to check.
     """
+    if not callable(func):
+        raise TypeError("Not a function")
     annotations = func.__annotations__
-
-    if not callable(func) or not all(
-        annotation is Ellipsis or isinstance(annotation, (type, str, type(Ellipsis)))
-        for annotation in annotations.values()
-    ):
-        raise TypeError("Invalid function or annotations")
-
     args = set(annotations.keys())
     if "item" in args and not annotations["item"] is pytest.Item:
         raise TypeError("Invalid function signature for 'item'")
