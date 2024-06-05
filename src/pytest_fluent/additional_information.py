@@ -98,6 +98,23 @@ def get_additional_information_callback(
     return info
 
 
+def check_type_with_optional(
+    annotation: typing.Any, exptected_type: typing.Type
+) -> bool:
+    """Check if is type with optional.
+
+    Args:
+        annotation (typing.Any): Annotation to check
+        exptected_type (typing.Type): Expected type
+
+    Returns:
+        bool: True if it is the expected type.
+    """
+    is_t = annotation is exptected_type
+    is_opt_t = annotation is typing.Optional[exptected_type]
+    return is_t or is_opt_t
+
+
 def check_allowed_input(func: typing.Callable) -> None:
     """Check that the given function has a specific signature.
 
@@ -108,7 +125,9 @@ def check_allowed_input(func: typing.Callable) -> None:
         raise TypeError("Not a function")
     annotations = func.__annotations__
     args = set(annotations.keys())
-    if "item" in args and not annotations["item"] is pytest.Item:
+    if "item" in args and not check_type_with_optional(
+        annotations["item"], pytest.Item
+    ):
         raise TypeError("Invalid function signature for 'item'")
     if not ("return" in args and annotations["return"] is dict):
         raise TypeError("Invalid function signature for return type. Expecting a dict.")
