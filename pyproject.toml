@@ -81,3 +81,10 @@ log_cli = false
 
 [tool.mypy]
 ignore_missing_imports = true
+
+[tool.ruff.lint]
+ignore = ["C901", "E203"]
+pydocstyle.convention = "google"
+
+[tool.ruff.format]
+quote-style = "double"
