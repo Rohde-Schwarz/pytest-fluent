@@ -4,9 +4,8 @@ import os
 from io import StringIO
 
 import pytest
-from ruamel.yaml import YAML
-
 from pytest_fluent.setting_file_loader_action import SettingFileLoaderAction
+from ruamel.yaml import YAML
 
 parser = argparse.ArgumentParser()
 parser.add_argument(

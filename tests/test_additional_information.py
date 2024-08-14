@@ -2,7 +2,6 @@ import typing
 from unittest.mock import patch
 
 import pytest
-
 import pytest_fluent.additional_information
 from pytest_fluent import (
     additional_information_callback,
@@ -13,7 +12,6 @@ from pytest_fluent.additional_information import check_allowed_input
 
 
 def test_allowed_input():
-
     def add_1() -> dict:
         return {}
 

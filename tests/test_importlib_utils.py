@@ -2,7 +2,6 @@ import logging
 import types
 
 import pytest
-
 from pytest_fluent.importlib_utils import (
     extract_function_from_module_string,
     load_module_from_path,
