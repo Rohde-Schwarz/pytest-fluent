@@ -22,8 +22,8 @@ def extract_function_from_module_string(
         class_name (str): The name of the record formatter class.
         module (typing.Optional[str], optional): Module name string or more descriptive
             dictionary. Defaults to None.
-        module (typing.Optional[str], optional): Module name string or more descriptive
-            dictionary. Defaults to None.
+        file_path (typing.Optional[str], optional): File path to the module.
+            Defaults to None.
 
     Returns:
         typing.Type[logging.Formatter]: The extract record formatter class.
