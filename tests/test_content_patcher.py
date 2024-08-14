@@ -6,7 +6,6 @@ import typing
 import uuid
 
 import pytest
-
 from pytest_fluent.content_patcher import ContentPatcher, _ContentType
 from pytest_fluent.plugin import FluentLoggerRuntime
 

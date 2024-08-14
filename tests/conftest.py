@@ -3,9 +3,8 @@ import uuid
 from unittest.mock import MagicMock, patch
 
 import pytest
-from fluent import handler
-
 import pytest_fluent.event
+from fluent import handler
 
 plugin_name = "pytest_fluent"
 SESSION_UUID = uuid.uuid4()

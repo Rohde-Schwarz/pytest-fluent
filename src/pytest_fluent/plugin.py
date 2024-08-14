@@ -495,7 +495,7 @@ def get_formatter(patcher: typing.Optional[ContentPatcher] = None) -> logging.Fo
 
 
 def load_record_formatter_class(
-    record_formatter_settings: typing.Dict[str, str]
+    record_formatter_settings: typing.Dict[str, str],
 ) -> logging.Formatter:
     """Load a custom record formatter.
 
