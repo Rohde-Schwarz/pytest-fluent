@@ -54,6 +54,9 @@ test = [
     "importlib-resources; python_version<='3.8'",
 ]
 
+[project.entry-points."pytest11"]
+fluent = "pytest_fluent.plugin"
+
 [build-system]
 requires = ["setuptools>=45.2", "wheel", "setuptools_scm[toml]>=3.4"]
 build-backend = "setuptools.build_meta"
@@ -75,7 +78,7 @@ source = ["src", "*/site-packages"]
 fallback_version = "0.0.0"
 
 [tool.pytest.ini_options]
-addopts = "-p no:fluent-logging -p pytester"
+addopts = "-p no:fluent -p pytester"
 log_level = "INFO"
 log_cli = false
 
