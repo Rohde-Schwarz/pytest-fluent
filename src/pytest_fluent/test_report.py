@@ -31,7 +31,10 @@ import six
 
 
 class LogReport(object):
+    """Log test results."""
+
     def __init__(self, config):
+        """Initialize log report."""
         self.config = config
         super(LogReport, self).__init__()
 
@@ -84,6 +87,7 @@ class LogReport(object):
         if_val: str,
         else_val: str,
     ) -> dict:
+        """Create test report dataset with verdict."""
         if predicate(report):
             return self.create_report(report, if_val)
         else:
@@ -108,7 +112,7 @@ class LogReport(object):
         return test_data
 
     def get_worker_id(self):
-        """Extract the worker id"""
+        """Extract the worker id."""
         worker_id = "default"
         if hasattr(self.config, "workerinput"):
             worker_id = self.config.workerinput["workerid"]

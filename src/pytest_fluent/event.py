@@ -38,6 +38,7 @@ class Event:
             tag (str): Fluent tag.
             label (str): Fluent label.
             data (dict): Data to transmit as dictionary.
+            **kwargs: Additional arguments
         """
         assert isinstance(data, dict), "data must be a dict"
         # Return if tag is empty string

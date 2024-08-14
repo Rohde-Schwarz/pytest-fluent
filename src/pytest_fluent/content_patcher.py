@@ -117,7 +117,7 @@ class ContentPatcher:
         self,
         content: dict,
         stage_name: typing.Optional[str] = None,
-        ignore_entries: typing.List[str] = [],
+        ignore_entries: typing.Optional[typing.List[str]] = None,
     ) -> dict:
         """Patch the content with the provided settings for each stage.
 
@@ -125,12 +125,15 @@ class ContentPatcher:
             content (dict): Structured data for transmission.
             stage_name (typing.Optional[str], optional): Calling stage name.
                 Defaults to None.
+            ignore_entries (typing.List[str], optional): List of keys to ignore.
 
         Returns:
                 dict: Patched dictionary with the user provided stage settings.
         """  # noqa
         if stage_name is None:
             stage_name = inspect.stack()[1][3]
+        if ignore_entries is None:
+            ignore_entries = []
 
         stage_info = self._user_settings.get(stage_name, {})
         stage_info = {k: v for k, v in stage_info.items() if k not in ignore_entries}
